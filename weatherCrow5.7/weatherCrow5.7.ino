@@ -1,5 +1,6 @@
 #include "config.h"
 #include <WiFi.h>
+#include <WiFiClientSecure.h>
 #include <HTTPClient.h>
 #include <Arduino_JSON.h>
 #include "EPD.h"
@@ -191,10 +192,12 @@ bool js_analysis()
   return true;
 }
 
-// Define the HTTP GET request function
+// Define the HTTPS GET request function
 String httpGETRequest(const char* serverName) {
-  WiFiClient client;
+  WiFiClientSecure client;
   HTTPClient http;
+
+  client.setInsecure(); // Disable certificate verification
 
   // Initialize the HTTP client and specify the requested server URL
   http.begin(client, serverName);
