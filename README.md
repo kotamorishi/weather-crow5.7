@@ -1,5 +1,5 @@
 # weather-crow5.7
-Weather station using CrowPanel ESP32 E-Paper HMI 5.79-inch Display
+Weather station using [CrowPanel ESP32 E-Paper HMI 5.79-inch Display](https://www.elecrow.com/crowpanel-esp32-5-79-e-paper-hmi-display-with-272-792-resolution-black-white-color-driven-by-spi-interface.html)
 
 This code based on the CrowPanel ESP32 E-Paper HMI 5.79-inch Display example.
 It is a weather station that displays the current weather and forecast for the next 3 days. The weather data is fetched from the OpenWeatherMap API.
