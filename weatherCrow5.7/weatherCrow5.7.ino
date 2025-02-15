@@ -24,6 +24,9 @@ JSONVar weatherApiResponse;
 struct WeatherInfo
 {
   String weather;
+  int currentDateTime;
+  int sunrise;
+  int sunset;
   String temperature;
   String humidity;
   String pressure;
@@ -173,11 +176,15 @@ bool getWeatherInfo()
 
     // Extract weather information from the parsed JSON data
     weatherInfo.weather = JSON.stringify(weatherApiResponse["weather"][0]["main"]);  // Weather main information
+    weatherInfo.currentDateTime = JSON.stringify(weatherApiResponse["current"]["dt"]).toInt();    // current time
+    weatherInfo.sunrise = JSON.stringify(weatherApiResponse["current"]["sunrise"]).toInt();;
+    weatherInfo.sunset = JSON.stringify(weatherApiResponse["current"]["sunset"]).toInt();;
     weatherInfo.temperature = JSON.stringify(weatherApiResponse["current"]["temp"]);    // Temperature
     weatherInfo.humidity = JSON.stringify(weatherApiResponse["current"]["humidity"]);   // Humidity
     weatherInfo.pressure = JSON.stringify(weatherApiResponse["current"]["pressure"]); // pressure
     weatherInfo.wind_speed = JSON.stringify(weatherApiResponse["wind"]["speed"]);    // Wind speed
     weatherInfo.city = JSON.stringify(weatherApiResponse["name"]);                   // City name
+
 
     // Print the extracted weather information
     Serial.print("String weather: ");
