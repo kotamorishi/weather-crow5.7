@@ -1,9 +1,12 @@
 #include "config.h"
 #include <WiFi.h>
+#include <WiFiClientSecure.h>
 #include <HTTPClient.h>
 #include <Arduino_JSON.h>
 #include "EPD.h"
 #include "pic.h"
+
+#define BAUD_RATE 115200
 
 uint8_t ImageBW[27200]; // Define the buffer size according to the resolution of the e-paper display
 
@@ -12,11 +15,6 @@ const char *password = WIFI_PASSWORD;
 String openWeatherMapApiKey = OPEN_WEATHER_MAP_API_KEY;
 String apiParamLatitude = LATITUDE;
 String apiParamLongtitude = LONGITUDE;
-
-// Default timer set to 10 seconds for testing
-// For the final application, set an appropriate time interval based on the hourly/minute API call limits
-unsigned long lastTime = 0;       // Last update time
-unsigned long timerDelay = 10000; // Timer set to 10 seconds (10000)
 
 // Define variables related to JSON data
 String jsonBuffer;
@@ -28,7 +26,7 @@ struct WeatherInfo
   String weather;
   String temperature;
   String humidity;
-  String sea_level;
+  String pressure;
   String wind_speed;
   String city;
   int weather_flag;
@@ -37,15 +35,8 @@ WeatherInfo weatherInfo;
 
 void UI_weather_forecast()
 {
-  char buffer[40]; // Create a character array to store information
-
-  // Clear the image and initialize the e-ink screen
-  Paint_NewImage(ImageBW, EPD_W, EPD_H, Rotation, WHITE); // Create a new image
-  Paint_Clear(WHITE);                                     // Clear the image content
-  EPD_FastMode1Init();                                    // Initialize the e-ink screen
-  EPD_Display_Clear();                                    // Clear the screen display
-  EPD_Update();                                           // Update the screen
-  EPD_Clear_R26A6H();                                     // Clear the e-ink screen cache
+  UI_clear_screen();
+  char buffer[40];
 
   // Display the image
   EPD_ShowPicture(0, 0, 792, 272, pic, WHITE); // Display the background image
@@ -79,7 +70,7 @@ void UI_weather_forecast()
 
   // Display the sea level pressure
   memset(buffer, 0, sizeof(buffer));
-  snprintf(buffer, sizeof(buffer), "%s ", weatherInfo.sea_level); // Format the sea level pressure as a string
+  snprintf(buffer, sizeof(buffer), "%s ", weatherInfo.pressure); // Format the sea level pressure as a string
   EPD_ShowString(620, 240, buffer, 24, BLACK);                    // Display the sea level pressure
 
   // Update the e-ink screen display content
@@ -88,14 +79,42 @@ void UI_weather_forecast()
   EPD_DeepSleep();      // Enter deep sleep mode
 }
 
+void UI_clear_screen()
+{
+  // Clear the image and initialize the e-ink screen
+  Paint_NewImage(ImageBW, EPD_W, EPD_H, Rotation, WHITE); // Create a new image
+  Paint_Clear(WHITE);                                     // Clear the image content
+  EPD_FastMode1Init();                                    // Initialize the e-ink screen
+  EPD_Display_Clear();                                    // Clear the screen display
+  EPD_Update();                                           // Update the screen
+  EPD_Clear_R26A6H();                                     // Clear the e-ink screen cache
+}
+
+void UI_show_message(char *message){
+  // draw screen to show network error
+  UI_clear_screen();
+
+  char buffer[128];
+  memset(buffer, 0, sizeof(buffer));
+  snprintf(buffer, sizeof(buffer), "%s ", message);
+  EPD_ShowString(20, 20, buffer, 24, BLACK);
+
+  // print message to serial
+  Serial.print("UI_show_message : ");
+  Serial.println(message);
+
+  // Update the e-ink screen display content
+  EPD_Display(ImageBW); // Display the image
+  EPD_PartUpdate();     // Partially update the screen
+  EPD_DeepSleep();      // Enter deep sleep mode
+
+}
+
 void setup()
 {
-  Serial.begin(115200); // Initialize the serial port
+  Serial.begin(BAUD_RATE);
   connectToWiFi();
-  Serial.print("Connected to WiFi network with IP Address: ");
-  Serial.println(WiFi.localIP()); // Print the IP address after successful connection
-  Serial.println("Timer set to 10 seconds (timerDelay variable), it will take 10 seconds before publishing the first reading.");
-
+  Serial.println(WiFi.localIP());
   screenPowerOn();
   EPD_GPIOInit(); // Initialize the GPIO pins of the e-paper
 }
@@ -118,7 +137,9 @@ void loop()
   try
   {
     connectToWiFi();
-    getWeatherInfo();
+    if(getWeatherInfo() == false){
+      UI_show_message("Failed to get weather infomation.");
+    }
     UI_weather_forecast();
   } catch (const std::exception &e) {
     Serial.print("Exception caught: ");
@@ -129,7 +150,7 @@ void loop()
 
 bool getWeatherInfo()
 {
-  // Check if successfully connected to the WiFi network
+
   if (WiFi.status() == WL_CONNECTED)
   {
     String apiEndPoint = "https://api.openweathermap.org/data/3.0/onecall?lat=" + apiParamLatitude + "&lon=" + apiParamLongtitude + "&APPID=" + openWeatherMapApiKey + "&units=metric";
@@ -152,9 +173,9 @@ bool getWeatherInfo()
 
     // Extract weather information from the parsed JSON data
     weatherInfo.weather = JSON.stringify(weatherApiResponse["weather"][0]["main"]);  // Weather main information
-    weatherInfo.temperature = JSON.stringify(weatherApiResponse["main"]["temp"]);    // Temperature
-    weatherInfo.humidity = JSON.stringify(weatherApiResponse["main"]["humidity"]);   // Humidity
-    weatherInfo.sea_level = JSON.stringify(weatherApiResponse["main"]["sea_level"]); // Sea level pressure
+    weatherInfo.temperature = JSON.stringify(weatherApiResponse["current"]["temp"]);    // Temperature
+    weatherInfo.humidity = JSON.stringify(weatherApiResponse["current"]["humidity"]);   // Humidity
+    weatherInfo.pressure = JSON.stringify(weatherApiResponse["current"]["pressure"]); // pressure
     weatherInfo.wind_speed = JSON.stringify(weatherApiResponse["wind"]["speed"]);    // Wind speed
     weatherInfo.city = JSON.stringify(weatherApiResponse["name"]);                   // City name
 
@@ -165,8 +186,8 @@ bool getWeatherInfo()
     Serial.println(weatherInfo.temperature);
     Serial.print("String humidity: ");
     Serial.println(weatherInfo.humidity);
-    Serial.print("String sea_level: ");
-    Serial.println(weatherInfo.sea_level);
+    Serial.print("String pressure: ");
+    Serial.println(weatherInfo.pressure);
     Serial.print("String wind_speed: ");
     Serial.println(weatherInfo.wind_speed);
     Serial.print("String city: ");
@@ -207,17 +228,17 @@ bool getWeatherInfo()
   return true;
 }
 
-
 void screenPowerOn(){
   pinMode(7, OUTPUT);    // Set GPIO 7 to output mode
   digitalWrite(7, HIGH); // Set GPIO 7 to high level to turn on the power
 }
 
-// Define the HTTP GET request function
-String httpsGETRequest(const char *serverName)
-{
-  WiFiClient client;
+// Define the HTTPS GET request function
+String httpsGETRequest(const char* serverName) {
+  WiFiClientSecure client;
   HTTPClient http;
+
+  client.setInsecure(); // Disable certificate verification, its not so safe.
 
   // Initialize the HTTP client and specify the requested server URL
   http.begin(client, serverName);
@@ -229,14 +250,12 @@ String httpsGETRequest(const char *serverName)
   String payload = "{}";
 
   // Check the response code and process the response content
-  if (httpResponseCode > 0)
-  {
+  if (httpResponseCode > 0) {
     Serial.print("HTTP Response code: ");
     Serial.println(httpResponseCode); // Print the response code
-    payload = http.getString();       // Get the response content
+    payload = http.getString(); // Get the response content
   }
-  else
-  {
+  else {
     Serial.print("Error code: ");
     Serial.println(httpResponseCode); // Print the error code
   }
