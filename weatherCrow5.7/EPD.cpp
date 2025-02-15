@@ -258,20 +258,24 @@ void EPD_ShowChar(uint16_t x,uint16_t y,uint16_t chr,uint16_t size1,uint16_t col
 {
 	uint16_t i,m,temp,size2,chr1;
 	uint16_t x0,y0;
-	x0=x,y0=y;
-	if(size1==8)size2=6;
-	else size2=(size1/8+((size1%8)?1:0))*(size1/2);  //得到字体一个字符对应点阵集所占的字节数
-	chr1=chr-' ';  //计算偏移后的值
+	x0 = x;
+	y0 = y;
+	if(size1==8){
+		size2=6;
+	} else {
+		size2=(size1/8+((size1%8)?1:0))*(size1/2);  // Get the number of bytes occupied by the dot matrix set corresponding to a character in the font
+	}
+	chr1 = chr - ' ';  // Calculate the offset value
 	for(i=0;i<size2;i++)
 	{
 		if(size1==12)
-        {temp=ascii_1206[chr1][i];} //调用1206字体
+        {temp=ascii_1206[chr1][i];} // use 1206 font
 		else if(size1==16)
-        {temp=ascii_1608[chr1][i];} //调用1608字体
+        {temp=ascii_1608[chr1][i];} // use 1608 font
 		else if(size1==24)
-        {temp=ascii_2412[chr1][i];} //调用2412字体
+        {temp=ascii_2412[chr1][i];} // use 2412 font
 		else if(size1==48)
-        {temp=ascii_4824[chr1][i];} //调用2412字体
+        {temp=ascii_4824[chr1][i];} // use 2412 font
 		else return;
 		for(m=0;m<8;m++)
 		{
@@ -298,7 +302,7 @@ void EPD_ShowChar(uint16_t x,uint16_t y,uint16_t chr,uint16_t size1,uint16_t col
 *******************************************************************/
 void EPD_ShowString(uint16_t x,uint16_t y,const char *chr,uint16_t size1,uint16_t color)
 {
-	while(*chr!='\0')//判断是不是非法字符!
+	while(*chr!='\0') // Determine if the character is a newline character
 	{
 		EPD_ShowChar(x,y,*chr,size1,color);
 		chr++;
