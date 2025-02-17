@@ -3,11 +3,18 @@ import cairosvg
 from PIL import Image
 from io import BytesIO
 
+# Define output image size, for the small icon
+imageSize = [32, 64, 128]
+
+# this scripte will genraate a temporary PNG file which is totall unnessary. just I want to see the output of the image.
+
 class SvgToBmpConverter:
-    def __init__(self, width=128, threshold=128, max_bytes=2048):
+    generatedList = []
+    def __init__(self, width=128, threshold=128):
         self.width = width
         self.threshold = threshold
-        self.max_bytes = max_bytes
+        # Calculate max_bytes based on width: (width * width / 8) + 4 bytes for header
+        self.max_bytes = ((width * width) // 8) + 4
         self.svg_dir = os.path.join(os.path.dirname(__file__), "svg")
         self.output_file = os.path.join(os.path.dirname(__file__), "weatherIcons.h")
 
@@ -54,7 +61,15 @@ class SvgToBmpConverter:
         bg.paste(img, mask=img.split()[3])
         img = bg.convert("L")
         width, height = img.size
-        bit_array = []
+
+        # Start with width and height as first 4 bytes (little endian)
+        bit_array = [
+            width & 0xFF,         # width low byte
+            (width >> 8) & 0xFF,  # width high byte
+            height & 0xFF,        # height low byte
+            (height >> 8) & 0xFF  # height high byte
+        ]
+
         for y in range(height):
             row_byte = 0
             bit_count = 0
@@ -62,13 +77,15 @@ class SvgToBmpConverter:
                 val = img.getpixel((x, y))
                 pixel = 1 if val < self.threshold else 0
                 row_byte = (row_byte << 1) | pixel
-                print(pixel, end="")
+                #print(pixel, end="")
                 bit_count += 1
                 if bit_count == 8:
                     bit_array.append(row_byte)
                     row_byte = 0
                     bit_count = 0
-            print()
+            #print()
+
+        # Calculate required padding to reach max_bytes
         if len(bit_array) < self.max_bytes:
             bit_array += [0] * (self.max_bytes - len(bit_array))
         else:
@@ -76,9 +93,39 @@ class SvgToBmpConverter:
         print()
         return bit_array
 
-    def generate_header_file(self):
-        with open(self.output_file, "w") as out:
-            # Add header guards
+    def generate_header_content(self):
+        """Generate header content for current size without writing to file"""
+        content = []
+        for f in os.listdir(self.svg_dir):
+            if f.lower().endswith(".svg"):
+                full_path = os.path.join(self.svg_dir, f)
+                print(f"Processing {full_path} at size {self.width}x{self.width}")
+                self.convert_svg_to_png(full_path, "tmp.png")
+                arr = self.image_to_bmp_array("tmp.png")
+                base_name = os.path.splitext(f)[0].replace('-', '_')
+                array_name = f"{base_name}_{self.width}"
+                content.append(f"// {array_name}: {self.width}x{self.width} pixels")
+                content.append(f"const unsigned char {array_name}[] = {{")
+                self.generatedList.append(array_name + ", ")
+
+                width_in_bytes = self.width // 8
+                hex_values = []
+                for i, val in enumerate(arr):
+                    hex_values.append(f"0X{val:02X}")
+                    if (i + 1) % width_in_bytes == 0:
+                        content.append("  " + ", ".join(hex_values) + ",")
+                        hex_values = []
+                if hex_values:
+                    content.append("  " + ", ".join(hex_values) + ",")
+                content.append("};\n")
+        print(self.generatedList)
+        return "\n".join(content)
+
+    @staticmethod
+    def generate_header_file(all_content):
+        """Write complete header file with all sizes"""
+        output_file = os.path.join(os.path.dirname(__file__), "weatherIcons.h")
+        with open(output_file, "w") as out:
             guard_name = "WEATHER_ICONS_H"
             out.write("// weatherIcons.h\n")
             out.write(f"#ifndef {guard_name}\n")
@@ -87,28 +134,30 @@ class SvgToBmpConverter:
             out.write('extern "C" {\n')
             out.write("#endif\n\n")
 
-            # Write bitmap arrays
-            for f in os.listdir(self.svg_dir):
-                if f.lower().endswith(".svg"):
-                    full_path = os.path.join(self.svg_dir, f)
-                    print(f"Processing {full_path}")
-                    self.convert_svg_to_png(full_path, "tmp.png")
-                    arr = self.image_to_bmp_array("tmp.png")
-                    array_name = os.path.splitext(f)[0].replace('-', '_')
-                    out.write(f"const unsigned char {array_name}[] = {{\n")
-                    width_in_bytes = 16
-                    for i, val in enumerate(arr):
-                        out.write(f"0x{val:02X}, ")
-                        if (i + 1) % width_in_bytes == 0:
-                            out.write("\n")
-                    out.write("};\n\n")
+            out.write("// Structure of the image\n")
+            out.write("//  uint16_t width; // firtst byte is width\n")
+            out.write("//  uint16_t height; // second byte is height\n")
+            out.write("//  const unsigned char *data; vary\n")
+            out.write("//};\n\n")
 
-            # Close header guards
+            # Write all size variants
+            out.write(all_content)
+
+            # Close guards
             out.write("#ifdef __cplusplus\n")
             out.write("}\n")
             out.write("#endif\n\n")
             out.write(f"#endif /* {guard_name} */\n")
 
+
 if __name__ == "__main__":
-    converter = SvgToBmpConverter(width=128, threshold=100)
-    converter.generate_header_file()
+    all_content = []
+    for size in sorted(imageSize):  # Sort sizes for consistent order
+        print(f"\nGenerating {size}x{size} icons...")
+        converter = SvgToBmpConverter(width=size, threshold=130)
+        content = converter.generate_header_content()
+        all_content.append(content)
+
+    # Generate single header file with all sizes
+    SvgToBmpConverter.generate_header_file("\n".join(all_content))
+    print(f"\nGenerated weatherIcons.h with all size variants")

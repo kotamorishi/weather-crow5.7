@@ -250,7 +250,7 @@ void EPD_DrawCircle(uint16_t X_Center,uint16_t Y_Center,uint16_t Radius,uint16_t
 	Interface Description: x     Character x-coordinate parameter
 						   y     Character y-coordinate parameter
 						   chr   Character to be displayed
-						   size1 Display character font size
+						   size1 Display character font size // only 8, 12, 16, 24, 48
 						   Color Pixel color parameter
 	Return Value:  None
 *******************************************************************/
@@ -296,7 +296,7 @@ void EPD_ShowChar(uint16_t x,uint16_t y,uint16_t chr,uint16_t size1,uint16_t col
 	Interface Description: x     String x-coordinate parameter
 						   y     String y-coordinate parameter
 						   *chr  String to be displayed
-						   size1 Display string font size
+						   size1 Display string font size, only 12, 16, 24, 48
 						   Color Pixel color parameter
 	Return Value:  None
 *******************************************************************/
@@ -434,4 +434,31 @@ void EPD_ShowPicture(uint16_t x,uint16_t y,uint16_t sizex,uint16_t sizey,const u
 		j++;
 //    delayMicroseconds(10);
 	}
+}
+
+
+void EPD_drawImage(uint16_t x, uint16_t y, uint16_t sizex, uint16_t sizey, const uint8_t *bmp)
+{
+    uint16_t bytesPerRow = (sizex + 7) / 8;
+    uint16_t x0 = x;
+    uint32_t idx = 0;
+    for(uint16_t row = 0; row < sizey; row++) {
+        for(uint16_t b = 0; b < bytesPerRow; b++) {
+            uint8_t temp = bmp[idx++];
+            for(uint8_t bit = 0; bit < 8; bit++) {
+                if(temp & 0x80) {
+                    Paint_SetPixel(x, y, BLACK);
+                } else {
+                    Paint_SetPixel(x, y, WHITE);
+                }
+                temp <<= 1;
+                x++;
+                if(x - x0 == sizex) {
+                    x = x0;
+                    y++;
+                    break;
+                }
+            }
+        }
+    }
 }
