@@ -437,28 +437,30 @@ void EPD_ShowPicture(uint16_t x,uint16_t y,uint16_t sizex,uint16_t sizey,const u
 }
 
 
-void EPD_drawImage(uint16_t x, uint16_t y, uint16_t sizex, uint16_t sizey, const uint8_t *bmp)
+void EPD_drawImage(uint16_t drawPositionX, uint16_t drawPositionY, const uint8_t *bmp)
 {
-    uint16_t bytesPerRow = (sizex + 7) / 8;
-    uint16_t x0 = x;
-    uint32_t idx = 0;
-    for(uint16_t row = 0; row < sizey; row++) {
+    // first two bytes are width and height
+    uint16_t width = bmp[0] | (bmp[1] << 8);
+    uint16_t height = bmp[2] | (bmp[3] << 8);
+
+    uint16_t bytesPerRow = (width + 7) / 8;
+    uint16_t baseXpos = drawPositionX;
+    uint32_t idx = 4;
+
+    for(uint16_t row = 0; row < height; row++) {
+        drawPositionX = baseXpos;  // Reset X position at the start of each row
         for(uint16_t b = 0; b < bytesPerRow; b++) {
             uint8_t temp = bmp[idx++];
-            for(uint8_t bit = 0; bit < 8; bit++) {
+            for(uint8_t bit = 0; bit < 8 && drawPositionX < (baseXpos + width); bit++) {
                 if(temp & 0x80) {
-                    Paint_SetPixel(x, y, BLACK);
+                    Paint_SetPixel(drawPositionX, drawPositionY, BLACK);
                 } else {
-                    Paint_SetPixel(x, y, WHITE);
+                    Paint_SetPixel(drawPositionX, drawPositionY, WHITE);
                 }
+                drawPositionX++;
                 temp <<= 1;
-                x++;
-                if(x - x0 == sizex) {
-                    x = x0;
-                    y++;
-                    break;
-                }
             }
         }
+        drawPositionY++;
     }
 }

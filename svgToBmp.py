@@ -4,7 +4,7 @@ from PIL import Image
 from io import BytesIO
 
 # Define output image size, for the small icon
-imageSize = [32, 64, 128]
+imageSize = [32, 64, 128, 256]
 
 # this scripte will genraate a temporary PNG file which is totall unnessary. just I want to see the output of the image.
 
@@ -55,7 +55,7 @@ class SvgToBmpConverter:
                 final.paste(resized, (paste_x, paste_y), resized)
                 final.save(output_filename, format="PNG")
 
-    def image_to_bmp_array(self, png_path):
+    def image_to_bmp_array(self, png_path, debug=False):
         img = Image.open(png_path)
         bg = Image.new("RGB", img.size, (255, 255, 255))
         bg.paste(img, mask=img.split()[3])
@@ -70,6 +70,9 @@ class SvgToBmpConverter:
             (height >> 8) & 0xFF  # height high byte
         ]
 
+        # Add line break for better readability after header
+        # bit_array.append(0x00)  # Add padding byte for alignment
+
         for y in range(height):
             row_byte = 0
             bit_count = 0
@@ -77,20 +80,21 @@ class SvgToBmpConverter:
                 val = img.getpixel((x, y))
                 pixel = 1 if val < self.threshold else 0
                 row_byte = (row_byte << 1) | pixel
-                #print(pixel, end="")
                 bit_count += 1
+                if debug:
+                    print(pixel, end="")
                 if bit_count == 8:
                     bit_array.append(row_byte)
                     row_byte = 0
                     bit_count = 0
-            #print()
+            if debug:
+                print()
 
         # Calculate required padding to reach max_bytes
         if len(bit_array) < self.max_bytes:
             bit_array += [0] * (self.max_bytes - len(bit_array))
         else:
             bit_array = bit_array[:self.max_bytes]
-        print()
         return bit_array
 
     def generate_header_content(self):
@@ -101,24 +105,27 @@ class SvgToBmpConverter:
                 full_path = os.path.join(self.svg_dir, f)
                 print(f"Processing {full_path} at size {self.width}x{self.width}")
                 self.convert_svg_to_png(full_path, "tmp.png")
-                arr = self.image_to_bmp_array("tmp.png")
+                arr = self.image_to_bmp_array("tmp.png", debug=False)
                 base_name = os.path.splitext(f)[0].replace('-', '_')
                 array_name = f"{base_name}_{self.width}"
                 content.append(f"// {array_name}: {self.width}x{self.width} pixels")
                 content.append(f"const unsigned char {array_name}[] = {{")
                 self.generatedList.append(array_name + ", ")
 
-                width_in_bytes = self.width // 8
+                width_in_bytes = (self.width + 7) // 8  # Calculate actual bytes per row
                 hex_values = []
                 for i, val in enumerate(arr):
-                    hex_values.append(f"0X{val:02X}")
-                    if (i + 1) % width_in_bytes == 0:
+                    hex_values.append(f"0x{val:02X}")
+                    if i == 3:  # Add extra line break after header
+                        content.append("  " + ", ".join(hex_values) + ",  // width, height")
+                        hex_values = []
+                    elif i > 3 and ((i - 4) % width_in_bytes == width_in_bytes - 1):  # Align with actual image width
                         content.append("  " + ", ".join(hex_values) + ",")
                         hex_values = []
                 if hex_values:
                     content.append("  " + ", ".join(hex_values) + ",")
                 content.append("};\n")
-        print(self.generatedList)
+
         return "\n".join(content)
 
     @staticmethod
@@ -154,7 +161,7 @@ if __name__ == "__main__":
     all_content = []
     for size in sorted(imageSize):  # Sort sizes for consistent order
         print(f"\nGenerating {size}x{size} icons...")
-        converter = SvgToBmpConverter(width=size, threshold=130)
+        converter = SvgToBmpConverter(width=size, threshold=100)
         content = converter.generate_header_content()
         all_content.append(content)
 
