@@ -3,7 +3,7 @@ import cairosvg
 from PIL import Image
 from io import BytesIO
 
-# Define output image size, for the small icon
+# Define target output image widths
 imageSize = [32, 64, 128, 256]
 
 # this scripte will genraate a temporary PNG file which is totall unnessary. just I want to see the output of the image.
@@ -34,25 +34,21 @@ class SvgToBmpConverter:
                 # Crop to content
                 cropped = original.crop(bbox)
 
-                # Calculate scaling to fit within bounds while maintaining aspect ratio
+                # Calculate scaling to fit width while maintaining aspect ratio
                 crop_width, crop_height = cropped.size
-                scale_width = self.width / crop_width
-                scale_height = self.width / crop_height
-                # Use minimum scale to ensure it fits in both dimensions
-                scale = min(scale_width, scale_height)
+                scale = self.width / crop_width
 
                 # Calculate new dimensions
-                new_width = int(crop_width * scale)
+                new_width = self.width
                 new_height = int(crop_height * scale)
 
                 # Resize the cropped image
                 resized = cropped.resize((new_width, new_height), Image.Resampling.LANCZOS)
 
-                # Create output image and center the resized content
-                final = Image.new('RGBA', (self.width, self.width), (255, 255, 255, 0))
-                paste_x = (self.width - new_width) // 2
-                paste_y = (self.width - new_height) // 2
-                final.paste(resized, (paste_x, paste_y), resized)
+                # Create output image with the same height as resized image
+                final = Image.new('RGBA', (new_width, new_height), (255, 255, 255, 0))
+                # Paste at the top (y=0)
+                final.paste(resized, (0, 0), resized)
                 final.save(output_filename, format="PNG")
 
     def image_to_bmp_array(self, png_path, debug=False):
@@ -61,6 +57,9 @@ class SvgToBmpConverter:
         bg.paste(img, mask=img.split()[3])
         img = bg.convert("L")
         width, height = img.size
+
+        # Calculate max_bytes based on actual dimensions
+        self.max_bytes = ((width * height) // 8) + 4
 
         # Start with width and height as first 4 bytes (little endian)
         bit_array = [
@@ -103,12 +102,17 @@ class SvgToBmpConverter:
         for f in os.listdir(self.svg_dir):
             if f.lower().endswith(".svg"):
                 full_path = os.path.join(self.svg_dir, f)
-                print(f"Processing {full_path} at size {self.width}x{self.width}")
+                print(f"Processing {full_path} at target width {self.width}")
                 self.convert_svg_to_png(full_path, "tmp.png")
+                # Get actual dimensions of generated image
+                with Image.open("tmp.png") as img:
+                    actual_width, actual_height = img.size
+                    print(f"  Actual size: {actual_width}x{actual_height} pixels")
+
                 arr = self.image_to_bmp_array("tmp.png", debug=False)
                 base_name = os.path.splitext(f)[0].replace('-', '_')
                 array_name = f"{base_name}_{self.width}"
-                content.append(f"// {array_name}: {self.width}x{self.width} pixels")
+                content.append(f"// {array_name}: {actual_width}x{actual_height} pixels")
                 content.append(f"const unsigned char {array_name}[] = {{")
                 self.generatedList.append(array_name + ", ")
 
@@ -125,6 +129,7 @@ class SvgToBmpConverter:
                 if hex_values:
                     content.append("  " + ", ".join(hex_values) + ",")
                 content.append("};\n")
+
 
         return "\n".join(content)
 

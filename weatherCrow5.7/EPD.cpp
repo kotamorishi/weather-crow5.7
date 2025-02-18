@@ -445,7 +445,7 @@ void EPD_drawImage(uint16_t drawPositionX, uint16_t drawPositionY, const uint8_t
 
     uint16_t bytesPerRow = (width + 7) / 8;
     uint16_t baseXpos = drawPositionX;
-    uint32_t idx = 4;
+    uint32_t idx = 4; // skip the first 4 bytes(width and height)
 
     for(uint16_t row = 0; row < height; row++) {
         drawPositionX = baseXpos;  // Reset X position at the start of each row
