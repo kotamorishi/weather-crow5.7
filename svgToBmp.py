@@ -34,20 +34,26 @@ class SvgToBmpConverter:
                 # Crop to content
                 cropped = original.crop(bbox)
 
-                # Calculate scaling to fit width while maintaining aspect ratio
+                # Calculate scaling to fit within target size while maintaining aspect ratio
                 crop_width, crop_height = cropped.size
-                scale = self.width / crop_width
+                scale_width = self.width / crop_width
+                scale_height = self.width / crop_height
+                # Use the smaller scale to ensure neither dimension exceeds target size
+                scale = min(scale_width, scale_height)
 
                 # Calculate new dimensions
-                new_width = self.width
+                new_width = int(crop_width * scale)
                 new_height = int(crop_height * scale)
+
+                # Round dimensions up to nearest multiple of 8
+                new_width = ((new_width + 7) // 8) * 8
+                new_height = ((new_height + 7) // 8) * 8
 
                 # Resize the cropped image
                 resized = cropped.resize((new_width, new_height), Image.Resampling.LANCZOS)
 
-                # Create output image with the same height as resized image
+                # Create output image with the rounded dimensions
                 final = Image.new('RGBA', (new_width, new_height), (255, 255, 255, 0))
-                # Paste at the top (y=0)
                 final.paste(resized, (0, 0), resized)
                 final.save(output_filename, format="PNG")
 
@@ -109,7 +115,7 @@ class SvgToBmpConverter:
                     actual_width, actual_height = img.size
                     print(f"  Actual size: {actual_width}x{actual_height} pixels")
 
-                arr = self.image_to_bmp_array("tmp.png", debug=False)
+                arr = self.image_to_bmp_array("tmp.png", debug=True)
                 base_name = os.path.splitext(f)[0].replace('-', '_')
                 array_name = f"{base_name}_{self.width}"
                 content.append(f"// {array_name}: {actual_width}x{actual_height} pixels")
