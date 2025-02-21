@@ -443,15 +443,26 @@ void EPD_drawImage(uint16_t drawPositionX, uint16_t drawPositionY, const uint8_t
     uint16_t width = bmp[0] | (bmp[1] << 8);
     uint16_t height = bmp[2] | (bmp[3] << 8);
 
-    uint16_t bytesPerRow = (width + 7) / 8;
+    uint16_t bytesPerRow = (width + 7) / 8;  // Round up to nearest byte
     uint16_t baseXpos = drawPositionX;
+    uint8_t lastByteMask = 0xFF >> ((bytesPerRow * 8) - width); // Mask for last byte in row
+
     uint32_t idx = 4; // skip the first 4 bytes(width and height)
 
     for(uint16_t row = 0; row < height; row++) {
         drawPositionX = baseXpos;  // Reset X position at the start of each row
         for(uint16_t b = 0; b < bytesPerRow; b++) {
             uint8_t temp = bmp[idx++];
-            for(uint8_t bit = 0; bit < 8 && drawPositionX < (baseXpos + width); bit++) {
+            // For the last byte in row, mask out unused bits
+            if (b == bytesPerRow - 1 && width % 8 != 0) {
+                temp &= lastByteMask;
+            }
+
+            // Calculate how many bits to process for this byte
+            uint8_t bitsThisByte = (b == bytesPerRow - 1 && width % 8 != 0) ?
+                                  (width % 8) : 8;
+
+            for(uint8_t bit = 0; bit < bitsThisByte; bit++) {
                 if(temp & 0x80) {
                     Paint_SetPixel(drawPositionX, drawPositionY, BLACK);
                 } else {

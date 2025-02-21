@@ -94,10 +94,10 @@ class WeatherCrow {
       char buffer[128];
       memset(buffer, 0, sizeof(buffer));
       snprintf(buffer, sizeof(buffer), "%s ", message);
-      EPD_ShowString(20, 0, buffer, 8, BLACK);
+      //EPD_ShowString(20, 0, buffer, 8, BLACK);
       EPD_ShowString(20, 20, buffer, 12, BLACK);
-      //EPD_ShowString(20, 32, buffer, 16, BLACK);
-      // EPD_ShowString(20, 58, buffer, 24, BLACK);
+      EPD_ShowString(20, 32, buffer, 16, BLACK);
+      EPD_ShowString(20, 58, buffer, 24, BLACK);
       // EPD_ShowString(20, 128, buffer, 48, BLACK);
       // EPD_ShowString(20, 172, buffer, 64, BLACK);
       logPrint("UI_show_message : ");
@@ -107,12 +107,54 @@ class WeatherCrow {
       EPD_DeepSleep();
     }
 
+    void UI_test(){
+        UI_clear_screen();
+        // Show background image and weather icon
+        //EPD_drawImage(0,   0, wi_barometer_256);
+        EPD_drawImage(0, 0, leo_face_small);
+        EPD_drawImage(128, 0, leo_face_midium);
+        EPD_drawImage(256, 0, leo_face_large);
+       // EPD_drawImage(256, 0, wi_barometer_256);
+
+        EPD_Display(ImageBW);
+      EPD_PartUpdate();
+      EPD_DeepSleep();
+
+    }
+
+    void UI_error_message(char *titile, char *description){
+      UI_clear_screen();
+
+      uint16_t baseXpos = 258;
+
+      // icon
+      EPD_drawImage(60, 60, error_midium);
+      EPD_DrawLine(baseXpos, 110, 740, 110, BLACK);
+
+      char buffer[128];
+
+      // title
+      memset(buffer, 0, sizeof(buffer));
+      snprintf(buffer, sizeof(buffer), "%s ", titile);
+      EPD_ShowString(baseXpos, 40, buffer, 48, BLACK);
+
+      // // description
+      memset(buffer, 0, sizeof(buffer));
+      snprintf(buffer, sizeof(buffer), "%s ", description);
+      EPD_ShowString(baseXpos, 130, buffer, 16, BLACK);
+
+
+      EPD_Display(ImageBW);
+      EPD_PartUpdate();
+      EPD_DeepSleep();
+
+    }
+
     void UI_weather_forecast(){
       UI_clear_screen();
       char buffer[40];
-      // Show background image and weather icon
-      EPD_ShowPicture(0, 0, 792, 272, pic, WHITE);
-      EPD_drawImage(4, 3, WETHER_IMAGE_WIDTH, WETHER_IMAGE_HEIGHT, wi_night_rain_wind);
+
+
       //EPD_ShowPicture(4, 3, 432, 128, Weather_Num[weatherInfo.weather_flag], WHITE);
       // Draw partition lines
       // EPD_DrawLine(0, 190, 792, 190, BLACK);
@@ -198,15 +240,22 @@ class WeatherCrow {
   public:
     void begin(){
       Serial.begin(BAUD_RATE);
-      connectToWiFi();
+      //connectToWiFi();
       Serial.println(WiFi.localIP());
       screenPowerOn();
       EPD_GPIOInit();
     }
 
     void run(){
-      //UI_show_message(" 1234567890 ABCDEFGHIJKLMNOPQRSTUVWXYZ ");
-      //delay(1000 * 60 * REFRESH_MINUITES);
+
+      char msg[] = "1234567890 !BCDEFGHIJKLMNOPQRSTUVWXYZ";
+      UI_show_message(msg);
+      delay(1000 * 60 * REFRESH_MINUITES);
+
+      // char msg[] = "ERROR";
+      // char description[] = "Here is the description of the error.";
+      // UI_error_message(msg,description);
+      // delay(1000 * 60 * REFRESH_MINUITES);
 
       connectToWiFi();
       if (!getWeatherInfo()){

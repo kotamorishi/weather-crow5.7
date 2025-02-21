@@ -40,7 +40,6 @@ void EPD_ClearWindows(uint16_t xs, uint16_t ys, uint16_t xe, uint16_t ye, uint16
 void EPD_ShowFloatNum1(uint16_t x,uint16_t y,float num,uint8_t len,uint8_t pre,uint8_t sizey,uint8_t color);
 void EPD_ShowWatch(uint16_t x,uint16_t y,float num,uint8_t len,uint8_t pre,uint8_t sizey,uint8_t color);
 
-void EPD_drawImage(uint16_t x, uint16_t y, uint16_t sizex, uint16_t sizey, const uint8_t BMP[]);
-
+void EPD_drawImage(uint16_t drawPositionX, uint16_t drawPositionY, const uint8_t *bmp);
 
 #endif
