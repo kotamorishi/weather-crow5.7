@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import ttk, messagebox  # Added messagebox import
+from tkinter import ttk, messagebox
 import re
 
 class FontEditor:
@@ -8,68 +8,95 @@ class FontEditor:
         self.root.title("Font Editor")
 
         # Font data
-        self.current_font = []
+        self.font_groups = {
+            'ascii_0806': {'data': [], 'dataSize': (8, 6), 'gridSize': (8, 6), 'blockSize': 1},
+            'ascii_1206': {'data': [], 'dataSize': (12, 12), 'gridSize': (12, 6), 'blockSize': 2},
+            'ascii_1608': {'data': [], 'dataSize': (16, 16), 'gridSize': (16, 8), 'blockSize': 2},
+            'ascii_2412': {'data': [], 'dataSize': (36, 36), 'gridSize': (24, 12), 'blockSize': 2},
+            'ascii_4824': {'data': [], 'dataSize': (48, 144), 'gridSize': (48, 24), 'blockSize': 3},
+        }
+        self.current_font_group = 'ascii_0806'
         self.current_char = 0
         self.cell_size = 20
-        self.grid_size = (8, 6)  # 8x6 for ascii_0806
+        # Initialize grid_size from current font group
+        self.grid_size = self.font_groups[self.current_font_group]['dataSize']
 
         # Load font data
-        self.load_font_data()
+        self.load_all_font_data()
 
         # Create widgets
         self.create_widgets()
 
-    def load_font_data(self):
+    def load_all_font_data(self):
         try:
-            print("Loading font data...")
-            # Fix the file path by removing the extra directory level
             with open('EPDfont_orig.h', 'r') as f:
                 content = f.read()
 
-                array_start = content.find('ascii_0806[][6]')
+            for font_name in self.font_groups.keys():
+                print(f"Loading {font_name}...")
+                array_start = content.find(f'{font_name}')
                 if array_start == -1:
-                    raise Exception("Font array not found")
+                    print(f"Font array {font_name} not found")
+                    continue
+
+                # Find the array declaration
+                array_decl_start = content.rfind('\n', 0, array_start)
+                array_decl = content[array_decl_start:array_start].strip()
+                print(f"Array declaration: {array_decl}")
 
                 start_idx = content.find('{', array_start)
                 end_idx = content.find('};', start_idx)
 
                 if start_idx != -1 and end_idx != -1:
-                    data = content[start_idx+1:end_idx].strip()
-                    char_arrays = [x.strip() for x in data.split('},') if x.strip()]
-                    self.current_font = []
+                    data = content[start_idx:end_idx].strip()
+                    char_arrays = []
+                    height = self.font_groups[font_name]['dataSize'][1]
 
-                    print(f"Font data found : {len(char_arrays)} characters")
+                    # Split the data into lines and process each line
+                    lines = data.split('\n')
+                    current_char = []
 
-                    for char_array in char_arrays:
-                        # Extract the hex values part before any comment
-                        if '{' in char_array:
-                            hex_part = char_array[char_array.find('{')+1:]
-                            if '//' in hex_part:
-                                hex_part = hex_part.split('//')[0]
+                    print('Loading data [', end='', flush=True)
 
-                            # Split and clean hex values
-                            hex_values = [x.strip() for x in hex_part.split(',') if x.strip() and '0x' in x]
+                    for line in lines:
+                        line = line.strip()
 
-                            if len(hex_values) == 6:  # Only process complete characters
-                                try:
-                                    bytes_data = [int(x, 16) for x in hex_values]
-                                    self.current_font.append(bytes_data)
-                                except ValueError as ve:
-                                    print(f"Skipping invalid hex values: {hex_values}")
-                                    continue
+                        if not line or line == '{':
+                            continue
 
-                    print(f"Successfully loaded {len(self.current_font)} characters")
-                else:
-                    raise Exception("Font data pattern not found in file")
+                        # Extract hex values using regex
+                        hex_values = re.findall(r'0x[0-9A-Fa-f]{2}', line)
+
+
+                        if hex_values:
+                            # If we find a complete character data in one line
+                            if len(hex_values) == height:
+                                print('.', end='', flush=True)
+                                char_arrays.append([int(v, 16) for v in hex_values])
+                            else:
+                                print('hex_values and height is not matched (hex :', len(hex_values),' height :', height, ')')
+                                #print('-', end='', flush=True)
+                                # Add values to current character
+                                current_char.extend([int(v, 16) for v in hex_values])
+
+                                # If we have a complete character, add it to the array
+                                if len(current_char) == height:
+                                    char_arrays.append(current_char)
+                                    current_char = []
+                    print(']', flush=True)
+
+                    self.font_groups[font_name]['data'] = char_arrays
+                    print(f"Loaded {len(char_arrays)} characters for {font_name}")
 
         except Exception as e:
             print(f"Error loading font data: {e}")
-            # Initialize empty font with 95 characters (ASCII 32-126)
-            self.current_font = [[0x00] * 6 for _ in range(95)]
+            # Initialize empty fonts
+            for font_name, font_info in self.font_groups.items():
+                font_info['data'] = [[0x00] * font_info['size'][1] for _ in range(95)]
 
     def load_char(self):
         # realod specified font data from the file
-        self.load_font_data()
+        self.load_all_font_data()
 
         try:
             char = self.char_selector.get()
@@ -77,18 +104,31 @@ class FontEditor:
                 char_code = ord(char)
                 if 32 <= char_code <= 126:  # Valid ASCII range
                     self.current_char = char_code - 32
-                    if 0 <= self.current_char < len(self.current_font):
+                    if 0 <= self.current_char < len(self.font_groups[self.current_font_group]['data']):
                         print(f"Loading character '{char}' (ASCII {char_code}, index {self.current_char})")
-                        print(f"Character data: {[f'0x{byte:02X}' for byte in self.current_font[self.current_char]]}")
+                        print(f"Character data: {[f'0x{byte:02X}' for byte in self.font_groups[self.current_font_group]['data'][self.current_char]]}")
                         self.draw_grid()
                     else:
-                        print(f"Character index {self.current_char} out of range (font has {len(self.current_font)} characters)")
+                        print(f"Character index {self.current_char} out of range (font has {len(self.font_groups[self.current_font_group]['data'])} characters)")
                 else:
                     print(f"Character '{char}' is outside valid ASCII range (32-126)")
         except Exception as e:
             print(f"Error loading character: {e}")
 
     def create_widgets(self):
+        # Font selector
+        font_frame = ttk.Frame(self.root)
+        font_frame.pack(pady=5)
+
+        ttk.Label(font_frame, text="Font:").pack(side=tk.LEFT)
+        self.font_selector = ttk.Combobox(font_frame,
+                                        values=list(self.font_groups.keys()),
+                                        state='readonly',
+                                        width=10)
+        self.font_selector.set(self.current_font_group)
+        self.font_selector.pack(side=tk.LEFT, padx=5)
+        self.font_selector.bind('<<ComboboxSelected>>', self.change_font_group)
+
         # Character selector
         selector_frame = ttk.Frame(self.root)
         selector_frame.pack(pady=10)
@@ -102,8 +142,8 @@ class FontEditor:
 
         # Grid editor
         self.canvas = tk.Canvas(self.root,
-                            width=self.grid_size[1]*self.cell_size,   # Use height (6) for width
-                            height=self.grid_size[0]*self.cell_size)  # Use width (8) for height
+                            width=self.grid_size[0]*self.cell_size * 1.4,   # Use width
+                            height=self.grid_size[1]*self.cell_size * 1.4)  # Use height
         self.canvas.pack(pady=10, padx=10)
 
         # Bind mouse events
@@ -112,103 +152,113 @@ class FontEditor:
         # Draw initial grid
         self.draw_grid()
 
+    def change_font_group(self, event=None):
+        self.current_font_group = self.font_selector.get()
+        self.grid_size = self.font_groups[self.current_font_group]['gridSize']
+        grid_width, grid_height = self.grid_size
+
+        blocks = self.font_groups[self.current_font_group]['blockSize']
+
+        # キャンバスのサイズを更新（高さはブロック数を考慮）
+        self.canvas.config(
+            width=grid_width * self.cell_size + 2,  # 境界線の分を少し余分に
+            height=grid_height * blocks * self.cell_size + 2  # 境界線の分を少し余分に
+        )
+
+        # グリッドを再描画
+        self.draw_grid()
+
     def draw_grid(self):
         self.canvas.delete("all")
+        grid_height, grid_width = self.font_groups[self.current_font_group]['gridSize']
+        data_height, data_width = self.font_groups[self.current_font_group]['dataSize']
 
-        # Draw pixels
-        char_data = self.current_font[self.current_char] if self.current_char < len(self.current_font) else [0]*6
+        font_data = self.font_groups[self.current_font_group]['data']
+        char_data = [0] * data_height
+        if self.current_char < len(font_data):
+            char_data = font_data[self.current_char]
 
-        for y in range(self.grid_size[1]):
-            for x in range(self.grid_size[0]):
-                # For 90 degrees counter-clockwise rotation:
-                # - new_x = y
-                # - new_y = (width-1) - x
-                rotated_x = y
-                rotated_y = (self.grid_size[0]-1) - x
+        blocks = self.font_groups[self.current_font_group]['blockSize']
 
-                # Calculate byte and bit position (using original coordinates for data access)
-                byte_pos = y
-                bit_pos = 7 - x
+        # Draw font grid with rotation correction
+        for block in range(blocks):
+            for row in range(grid_width):
+                for col in range(grid_height):
+                    byte_index = block * grid_height + row
+                    bit_position = 7 - col
 
-                # Check if pixel is set
-                if byte_pos < len(char_data):
-                    is_set = (char_data[byte_pos] & (1 << bit_pos)) != 0
-                else:
                     is_set = False
+                    if byte_index < len(char_data):
+                        is_set = (char_data[byte_index] & (1 << bit_position)) != 0
 
-                # Draw rectangle with rotated coordinates
-                color = "black" if is_set else "white"
-                self.canvas.create_rectangle(
-                    rotated_x*self.cell_size, rotated_y*self.cell_size,
-                    (rotated_x+1)*self.cell_size, (rotated_y+1)*self.cell_size,
-                    fill=color, outline="gray"
-                )
+                    x1 = row * self.cell_size
+                    y1 = (block * grid_height + (grid_height - col - 1)) * self.cell_size
+                    y2 = (block * grid_height + (grid_height - col - 1) + 1) * self.cell_size
+                    x2 = (row + 1) * self.cell_size
+
+                    color = "black" if is_set else "white"
+                    self.canvas.create_rectangle(
+                        x1, y1, x2, y2,
+                        fill=color, outline="gray"
+                    )
+
 
     def toggle_pixel(self, event):
-        # Convert click coordinates back to original grid position
-        rotated_x = event.x // self.cell_size
-        rotated_y = event.y // self.cell_size
+        grid_height, grid_width = self.font_groups[self.current_font_group]['gridSize']
+        data_height, data_width = self.font_groups[self.current_font_group]['dataSize']
+        blocks = data_height // grid_height
 
-        # Convert rotated coordinates back to original positions
-        x = (self.grid_size[0]-1) - rotated_y
-        y = rotated_x
+        col = event.x // self.cell_size
+        row = event.y // self.cell_size
+        block = row // grid_height
+        data_row = row % grid_height
 
-        if 0 <= x < self.grid_size[0] and 0 <= y < self.grid_size[1]:
-            # Calculate byte and bit position
-            byte_pos = y
-            bit_pos = 7 - x
+        if col >= grid_width or row >= grid_height * blocks:
+            return
 
-            # Toggle bit
-            if byte_pos < len(self.current_font[self.current_char]):
-                self.current_font[self.current_char][byte_pos] ^= (1 << bit_pos)
+        byte_index = block * grid_height + data_row
+        # Rotate bit position 90 degrees left from current state
+        bit_position = col  # Changed from (7 - col) to col
 
+        if byte_index < len(self.font_groups[self.current_font_group]['data'][self.current_char]):
+            self.font_groups[self.current_font_group]['data'][self.current_char][byte_index] ^= (1 << bit_position)
             self.draw_grid()
-
 
     def save_font(self):
         try:
             output_file = 'EPDfont_orig.h'
-
-            # Read existing file content
             with open(output_file, 'r') as f:
                 content = f.read()
 
-            # Find the font array in the content - use more flexible pattern matching
-            array_pattern = 'ascii_0806'
-            array_start = content.find(array_pattern)
-            if array_start == -1:
-                raise Exception("Font array not found in file")
+            for font_name, font_info in self.font_groups.items():
+                array_start = content.find(font_name)
+                if array_start == -1:
+                    continue
 
-            # Find the opening brace of the array
-            start_idx = content.find('{', array_start)
-            if start_idx == -1:
-                raise Exception("Array start not found")
+                start_idx = content.find('{', array_start)
+                end_idx = content.find('};', start_idx)
+                if start_idx == -1 or end_idx == -1:
+                    continue
+                end_idx += 2
 
-            # Find the closing brace of the array
-            end_idx = content.find('};', start_idx)
-            if end_idx == -1:
-                raise Exception("Array end not found")
-            end_idx += 2  # Include the };
+                height = font_info['dataSize'][1]
+                new_font_data = f"const unsigned char {font_name}[][{height}]={{\n"
 
-            # Generate new font data string
-            new_font_data = "const unsigned char ascii_0806[][6]={\n"
-            for i, char_data in enumerate(self.current_font):
-                if i % 4 == 0:  # Add newline every 4 characters for readability
-                    new_font_data += "    "
-                new_font_data += "{" + ",".join(f"0x{byte:02X}" for byte in char_data) + "},"
-                if i % 4 == 3:  # Add newline after every 4th character
-                    new_font_data += "\n"
-            new_font_data = new_font_data.rstrip(",\n") + "\n};"
+                for i, char_data in enumerate(font_info['data']):
+                    if i % 4 == 0:
+                        new_font_data += "    "
+                    # データはすでに正しい向きなので、回転処理は不要
+                    new_font_data += "{" + ",".join(f"0x{byte:02X}" for byte in char_data) + "},"
+                    if i % 4 == 3:
+                        new_font_data += "\n"
+                new_font_data = new_font_data.rstrip(",\n") + "\n};"
 
-            # Replace the old font data with new font data
-            new_content = content[:start_idx] + new_font_data[new_font_data.find('{'):] + content[end_idx:]
+                content = content[:start_idx] + new_font_data[new_font_data.find('{'):] + content[end_idx:]
 
-            # Write the updated content back to file
             with open(output_file, 'w') as f:
-                f.write(new_content)
+                f.write(content)
 
-            # Show success message
-            tk.messagebox.showinfo("Success", "Font data saved successfully!")
+            tk.messagebox.showinfo("Success", "All font data saved successfully!")
 
         except Exception as e:
             messagebox.showerror("Error", f"Failed to save font data: {str(e)}")
