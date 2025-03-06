@@ -1,5 +1,6 @@
 #include "EPD.h"
 #include "EPDfont.h"
+#include "fonts.h"
 #include "string.h"
 
 PAINT Paint;
@@ -245,70 +246,136 @@ void EPD_DrawCircle(uint16_t X_Center,uint16_t Y_Center,uint16_t Radius,uint16_t
     }
 }
 
+
 /*******************************************************************
-	Function Description: Display a single character
-	Interface Description: x     Character x-coordinate parameter
-						   y     Character y-coordinate parameter
-						   chr   Character to be displayed
-						   size1 Display character font size // only 8, 12, 16, 24, 48
-						   Color Pixel color parameter
-	Return Value:  None
+    Function Description: Display a single character using variable-width font
+    Interface Description:
+        x         Character x-coordinate parameter
+        y         Character y-coordinate parameter
+        chr       Character to be displayed (ASCII 0x20 to 0x7E)
+        font_size Font height (e.g., 8, 12, 24)
+        color     Pixel color parameter (1 for black, 0 for white)
+    Return Value: None
 *******************************************************************/
-void EPD_ShowChar(uint16_t x,uint16_t y,uint16_t chr,uint16_t size1,uint16_t color)
-{
-	uint16_t i,m,temp,size2,chr1;
-	uint16_t x0,y0;
-	x0 = x;
-	y0 = y;
-	if(size1==8){
-		size2=6;
-	} else {
-		size2=(size1/8+((size1%8)?1:0))*(size1/2);  // Get the number of bytes occupied by the dot matrix set corresponding to a character in the font
-	}
-	chr1 = chr - ' ';  // Calculate the offset value
-	for(i=0;i<size2;i++)
-	{
-		if(size1==12)
-        {temp=ascii_1206[chr1][i];} // use 1206 font
-		else if(size1==16)
-        {temp=ascii_1608[chr1][i];} // use 1608 font
-		else if(size1==24)
-        {temp=ascii_2412[chr1][i];} // use 2412 font
-		else if(size1==48)
-        {temp=ascii_4824[chr1][i];} // use 2412 font
-		else return;
-		for(m=0;m<8;m++)
-		{
-			if(temp&0x01)Paint_SetPixel(x,y,color);
-			else Paint_SetPixel(x,y,!color);
-			temp>>=1;
-			y++;
-		}
-		x++;
-		if((size1!=8)&&((x-x0)==size1/2))
-		{x=x0;y0=y0+8;}
-		y=y0;
-  }
+void EPD_ShowChar(uint16_t x, uint16_t y, uint16_t chr, uint16_t font_size, uint16_t color) {
+    const FontSet *font;
+
+    switch (font_size) {
+        case 8:
+		    font = &font_8;
+			break;
+        case 12:
+			font = &font_12;
+			break;
+        case 24:
+			font = &font_24;
+			break;
+		case 36:
+			font = &font_36;
+			break;
+        default:
+            Serial.println("ERROR : Font size not supported!! You can add more fonts with ttfToEPD tool.");
+            return;
+    }
+
+    if (!font || !font->chars) {
+        Serial.println("ERROR : Font does not initialized.");
+        return;
+    }
+
+    uint8_t chr_index = chr - font->char_start;
+    if (chr_index >= font->char_count) {
+        Serial.println("ERROR : Character out of range");
+        return;
+    }
+
+
+    const FontChar *char_data = font->chars[chr_index];
+
+    // Print sizes of variables
+    Serial.print("[CHAR ");
+	Serial.print(chr);
+	Serial.print('/');
+	Serial.print((char)char_data->char_code);
+    Serial.print("] width: ");
+    Serial.print(char_data->width);
+	Serial.print(" height: ");
+    Serial.print(char_data->height);
+    Serial.print(", bytes_per_row: ");
+    Serial.print(char_data->bytes_per_row);
+    Serial.println();
+
+    // Calculate expected bytes per row based on width
+    uint8_t expected_bytes = (char_data->width + 7) / 8;
+
+    // Validate bytes_per_row
+    if (char_data->bytes_per_row == 0 || char_data->bytes_per_row > expected_bytes) {
+        Serial.println("Invalid bytes_per_row");
+        return;
+    }
+
+    if (!char_data->bitmap) {
+        Serial.println("No bitmap data");
+        return;
+    }
+
+    // Draw character with bounds checking
+    uint16_t current_y = y + (uint16_t)char_data->vertical_offset;
+    for (uint16_t row = 0; row < char_data->height && current_y <= Paint.heightMemory; row++) {
+		Serial.println();
+		Serial.print("Processing x: ");
+		Serial.print(x);
+		Serial.print(", y: ");
+		Serial.print(current_y);
+		Serial.print(" ==> ");
+        uint16_t current_x = x + (uint16_t)char_data->horizontal_offset;
+        for (uint16_t byte_idx = 0; byte_idx < char_data->bytes_per_row && current_x < Paint.widthMemory; byte_idx++) {
+            uint8_t byte = char_data->bitmap[row * char_data->bytes_per_row + byte_idx];
+            for (uint8_t bit = 0; bit < 8 && (byte_idx * 8 + bit) < char_data->width; bit++) {
+                if (current_x >= Paint.widthMemory) break;
+				if (current_y >= Paint.heightMemory) break;
+                Paint_SetPixel(current_x++, current_y, (byte & (0x80 >> bit)) ? color : !color);
+
+            }
+        }
+        current_y++;
+    }
 }
 
 /*******************************************************************
-	Function Description: Display a string
-	Interface Description: x     String x-coordinate parameter
-						   y     String y-coordinate parameter
-						   *chr  String to be displayed
-						   size1 Display string font size, only 12, 16, 24, 48
-						   Color Pixel color parameter
-	Return Value:  None
+    Function Description: Display a string using variable-width font
+    Interface Description:
+        x       String x-coordinate parameter
+        y       String y-coordinate parameter
+        chr     String to be displayed (null-terminated)
+        fontSetSize   Font height (e.g., 8, 12, 24)
+        color   Pixel color parameter
+    Return Value: None
 *******************************************************************/
-void EPD_ShowString(uint16_t x,uint16_t y,const char *chr,uint16_t size1,uint16_t color)
-{
-	while(*chr!='\0') // Determine if the character is a newline character
-	{
-		EPD_ShowChar(x,y,*chr,size1,color);
-		chr++;
-		x+=size1/2;
-  }
+void EPD_ShowString(uint16_t x, uint16_t y, const char *chr, uint16_t fontSetSize, uint16_t color) {
+    const FontSet *font;
+
+    switch (fontSetSize) {
+        case 8:  font = &font_8;  break;
+        case 12: font = &font_12; break;
+        case 24: font = &font_24; break;
+		case 36: font = &font_36; break;
+        default: return;
+    }
+
+    uint16_t x_pos = x;
+    while (*chr != '\0') {
+        uint16_t chr_index = *chr - font->char_start;
+        if (chr_index < font->char_count) {
+            const FontChar *current_char = font->chars[chr_index];
+            EPD_ShowChar(x_pos, y, current_char->char_code, fontSetSize, color);
+            x_pos += current_char->width + 1;
+        }
+        chr++;
+    }
 }
+
+
 /*******************************************************************
 	Function Description: Exponential operation
 	Interface Description: m Base
@@ -324,33 +391,7 @@ uint32_t EPD_Pow(uint16_t m,uint16_t n)
 	}
 	return result;
 }
-/*******************************************************************
-	Function Description: Display an integer number
-	Interface Description: x     Number x-coordinate parameter
-						   y     Number y-coordinate parameter
-						   num   Number to be displayed
-						   len   Number of digits
-						   size1 Display string font size
-						   Color Pixel color parameter
-	Return Value:  None
-*******************************************************************/
-void EPD_ShowNum(uint16_t x,uint16_t y,uint32_t num,uint16_t len,uint16_t size1,uint16_t color)
-{
-	uint8_t t,temp,m=0;
-	if(size1==8)m=2;
-	for(t=0;t<len;t++)
-	{
-		temp=(num/EPD_Pow(10,len-t-1))%10;
-			if(temp==0)
-			{
-				EPD_ShowChar(x+(size1/2+m)*t,y,'0',size1,color);
-      }
-			else
-			{
-			  EPD_ShowChar(x+(size1/2+m)*t,y,temp+'0',size1,color);
-			}
-  }
-}
+
 /*******************************************************************
 	Function Description: Display a floating-point number
 	Interface Description: x     Number x-coordinate parameter

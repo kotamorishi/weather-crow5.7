@@ -6,30 +6,67 @@ def ttf_to_c_font(ttf_file, output_file, font_height):
     ttfont = TTFont(ttf_file)
     font = ImageFont.truetype(ttf_file, font_height)
 
+    # Get font metrics with proper scaling
+    units_per_em = ttfont['head'].unitsPerEm
+    ascent = ttfont['hhea'].ascent * font_height / units_per_em
+    descent = abs(ttfont['hhea'].descent * font_height / units_per_em)
+
+    # Calculate baseline position from bottom
+    baseline_from_bottom = descent
+    total_height = ascent + descent
+    scale_factor = font_height / total_height
+
+    # First pass: measure all characters to find the consistent baseline
+    test_chars = []
+    max_height = 0
+    max_ascent = 0
+
+    for codepoint in range(0x20, 0x7F):
+        char = chr(codepoint)
+        img = Image.new('1', (font_height * 2, font_height * 2), 0)
+        draw = ImageDraw.Draw(img)
+        draw.text((font_height//2, font_height//2), char, font=font, fill=1, anchor="mm")
+
+        bbox = img.getbbox()
+        if bbox:
+            left, top, right, bottom = bbox
+            height = bottom - top
+            max_height = max(max_height, height)
+            max_ascent = max(max_ascent, font_height//2 - top)
+            test_chars.append((char, top, bottom, height))
+
+    # Calculate the optimal baseline position
+    optimal_baseline = int(max_ascent * scale_factor)
+
     chars = []
     for codepoint in range(0x20, 0x7F):
         char = chr(codepoint)
-        img = Image.new('1', (font_height * 2, font_height * 2), 0)  # make a bit larger to avoid cropping
+        img = Image.new('1', (font_height * 2, font_height * 2), 0)
         draw = ImageDraw.Draw(img)
-        draw.text((0, 0), char, font=font, fill=1)
 
-        # get bounding box to obtain the actual width of the character
+        # Draw text at the calculated baseline position
+        draw.text((0, optimal_baseline), char, font=font, fill=1)
+
         bbox = img.getbbox()
         if not bbox:
             continue
+
         left, top, right, bottom = bbox
         width = right - left
         height = bottom - top
 
-        if height > font_height + 1:
-            height = font_height
+        # Calculate vertical offset from the optimal baseline
+        vertical_offset = optimal_baseline - (top + height)
+        vertical_offset = max(-128, min(127, vertical_offset))
 
+        # Rest of the bitmap processing
         bitmap = img.crop((left, top, left + width, top + height))
         pixels = list(bitmap.getdata())
+        vertical_offset = top - font_height
         bytes_per_row = (width + 7) // 8
         bitmap_bytes = []
 
-        # print(f'{char} (U+{codepoint:04X}): width={width}, height={height}, bytes_per_row={bytes_per_row}')
+        # print(f'{char} (U+{codepoint:04X}): width={width}, height={height}, vertical_offset={vertical_offset}, baseline={optimal_baseline}, bytes_per_row={bytes_per_row}')
         for y in range(height):
             byte_row = 0
             for x in range(width):
@@ -44,7 +81,8 @@ def ttf_to_c_font(ttf_file, output_file, font_height):
             'code': codepoint,
             'width': width,
             'height': height,
-            'offset': offset,
+            'vertical_offset': vertical_offset,
+            'horizontal_offset': 0,
             'bytes_per_row': bytes_per_row,
             'bitmap': bitmap_bytes
         })
@@ -69,10 +107,13 @@ def ttf_to_c_font(ttf_file, output_file, font_height):
             f.write(f'    .char_code = \'{char_data["char"].replace("\\", "\\\\").replace("\'", "\\\'").replace("\"", "\\\"")}\',\n')
             f.write(f'    .width = (uint8_t){char_data["width"]},\n')
             f.write(f'    .height = (uint8_t){char_data["height"]},\n')
-            f.write(f'    .baseline = (uint8_t){char_data["baseline"]},\n')
+            f.write(f'    .vertical_offset = (int8_t){char_data["vertical_offset"]},\n')
+            f.write(f'    .horizontal_offset = (int8_t){char_data["horizontal_offset"]},\n')
             f.write(f'    .bytes_per_row = (uint8_t){char_data["bytes_per_row"]},\n')
             f.write(f'    .bitmap = font_{font_height}_{ord(char_data["char"]):02x}\n')
             f.write('};\n\n')
+            # print(f'{char_data["char"]} (U+{char_data["code"]:04X}): width={char_data["width"]}, height={char_data["height"]}, vertical_offset={char_data["vertical_offset"]}, bytes_per_row={char_data["bytes_per_row"]}')
+
 
         f.write(f'const FontChar * const font_{font_height}_chars[] = {{\n')
         for i, char_data in enumerate(chars):
