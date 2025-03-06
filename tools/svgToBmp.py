@@ -19,7 +19,7 @@ class SvgToBmpConverter:
         self.threshold = threshold
         # Calculate max_bytes based on width: (width * width / 8) + 4 bytes for header
         self.max_bytes = ((width * width) // 8) + 4
-        self.svg_dir = os.path.join(os.path.dirname(__file__), "svg")
+        self.svg_dir = os.path.join(os.path.dirname(__file__), "../svg")
         self.output_file = os.path.join(os.path.dirname(__file__), "weatherIcons.h")
         self.category_base_sizes = {}  # Store base sizes for each category
 
