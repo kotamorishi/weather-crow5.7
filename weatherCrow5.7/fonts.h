@@ -19,6 +19,7 @@ typedef struct {
     uint8_t height;         // Font height in pixels
     uint8_t char_start;     // First character code (usually 0x20 for space)
     uint8_t char_count;     // Number of characters in the font
+    int8_t space_width;     // Width of the space character
     const FontChar * const *chars;  // Pointer to array of pointers to FontChar structs
 } FontSet;
 

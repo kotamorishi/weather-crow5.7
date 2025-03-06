@@ -123,6 +123,7 @@ def ttf_to_c_font(ttf_file, output_file, font_height):
         f.write(f'    .height = (uint8_t){font_height},\n')
         f.write(f'    .char_start = 0x21,\n')
         f.write(f'    .char_count = (uint8_t)95,\n')
+        f.write(f'    .space_width = (int8_t)0,\n')
         f.write(f'    .chars = font_{font_height}_chars\n')
         f.write('};\n')
 

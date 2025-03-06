@@ -289,21 +289,8 @@ void EPD_ShowChar(uint16_t x, uint16_t y, uint16_t chr, uint16_t font_size, uint
         return;
     }
 
-
     const FontChar *char_data = font->chars[chr_index];
 
-    // Print sizes of variables
-    Serial.print("[CHAR ");
-	Serial.print(chr);
-	Serial.print('/');
-	Serial.print((char)char_data->char_code);
-    Serial.print("] width: ");
-    Serial.print(char_data->width);
-	Serial.print(" height: ");
-    Serial.print(char_data->height);
-    Serial.print(", bytes_per_row: ");
-    Serial.print(char_data->bytes_per_row);
-    Serial.println();
 
     // Calculate expected bytes per row based on width
     uint8_t expected_bytes = (char_data->width + 7) / 8;
@@ -322,12 +309,6 @@ void EPD_ShowChar(uint16_t x, uint16_t y, uint16_t chr, uint16_t font_size, uint
     // Draw character with bounds checking
     uint16_t current_y = y + (uint16_t)char_data->vertical_offset;
     for (uint16_t row = 0; row < char_data->height && current_y <= Paint.heightMemory; row++) {
-		Serial.println();
-		Serial.print("Processing x: ");
-		Serial.print(x);
-		Serial.print(", y: ");
-		Serial.print(current_y);
-		Serial.print(" ==> ");
         uint16_t current_x = x + (uint16_t)char_data->horizontal_offset;
         for (uint16_t byte_idx = 0; byte_idx < char_data->bytes_per_row && current_x < Paint.widthMemory; byte_idx++) {
             uint8_t byte = char_data->bitmap[row * char_data->bytes_per_row + byte_idx];
@@ -369,7 +350,7 @@ void EPD_ShowString(uint16_t x, uint16_t y, const char *chr, uint16_t fontSetSiz
         if (chr_index < font->char_count) {
             const FontChar *current_char = font->chars[chr_index];
             EPD_ShowChar(x_pos, y, current_char->char_code, fontSetSize, color);
-            x_pos += current_char->width + 1;
+            x_pos += current_char->width + font->space_width;
         }
         chr++;
     }
