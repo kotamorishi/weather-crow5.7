@@ -29,7 +29,7 @@ def ttf_to_c_font(ttf_file, output_file, font_height):
         bytes_per_row = (width + 7) // 8
         bitmap_bytes = []
 
-        print(f'{char} (U+{codepoint:04X}): width={width}, height={height}, bytes_per_row={bytes_per_row}')
+        # print(f'{char} (U+{codepoint:04X}): width={width}, height={height}, bytes_per_row={bytes_per_row}')
         for y in range(height):
             byte_row = 0
             for x in range(width):
@@ -43,9 +43,10 @@ def ttf_to_c_font(ttf_file, output_file, font_height):
             'char': char,
             'code': codepoint,
             'width': width,
+            'height': height,
+            'offset': offset,
             'bytes_per_row': bytes_per_row,
-            'bitmap': bitmap_bytes,
-            'height': height
+            'bitmap': bitmap_bytes
         })
 
     with open(output_file, 'w') as f:
@@ -68,6 +69,7 @@ def ttf_to_c_font(ttf_file, output_file, font_height):
             f.write(f'    .char_code = \'{char_data["char"].replace("\\", "\\\\").replace("\'", "\\\'").replace("\"", "\\\"")}\',\n')
             f.write(f'    .width = (uint8_t){char_data["width"]},\n')
             f.write(f'    .height = (uint8_t){char_data["height"]},\n')
+            f.write(f'    .baseline = (uint8_t){char_data["baseline"]},\n')
             f.write(f'    .bytes_per_row = (uint8_t){char_data["bytes_per_row"]},\n')
             f.write(f'    .bitmap = font_{font_height}_{ord(char_data["char"]):02x}\n')
             f.write('};\n\n')
