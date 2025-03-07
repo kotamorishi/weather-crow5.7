@@ -2,6 +2,7 @@
 #define _EPD_GUI_H_
 
 #include "EPD_Init.h"
+#include "fonts.h"
 
 typedef struct {
 	uint8_t *Image;
@@ -32,12 +33,10 @@ void Paint_Clear(uint8_t Color); // Clear the canvas with a color
 void EPD_DrawLine(uint16_t Xstart, uint16_t Ystart, uint16_t Xend, uint16_t Yend, uint16_t Color); // Draw a line
 void EPD_DrawRectangle(uint16_t Xstart, uint16_t Ystart, uint16_t Xend, uint16_t Yend, uint16_t Color, uint8_t mode); // Draw a rectangle
 void EPD_DrawCircle(uint16_t X_Center, uint16_t Y_Center, uint16_t Radius, uint16_t Color, uint8_t mode); // Draw a circle
-void EPD_ShowChar(uint16_t x, uint16_t y, uint16_t chr, uint16_t size1, uint16_t color); // Display a character
-void EPD_ShowString(uint16_t x, uint16_t y, const char *chr, uint16_t size1, uint16_t color); // Display a string
+void EPD_ShowChar(uint16_t x, uint16_t y, uint16_t chr, FontSize font_size, uint16_t color); // Display a character
+void EPD_ShowString(uint16_t x, uint16_t y, const char *chr, FontSize font_size, uint16_t color); // Display a string
 void EPD_ShowPicture(uint16_t x, uint16_t y, uint16_t sizex, uint16_t sizey, const uint8_t BMP[], uint16_t Color); // Display a picture
 void EPD_ClearWindows(uint16_t xs, uint16_t ys, uint16_t xe, uint16_t ye, uint16_t color); // Clear a window area with a color
-void EPD_ShowFloatNum1(uint16_t x,uint16_t y,float num,uint8_t len,uint8_t pre,uint8_t sizey,uint8_t color);
-void EPD_ShowWatch(uint16_t x,uint16_t y,float num,uint8_t len,uint8_t pre,uint8_t sizey,uint8_t color);
 
 void EPD_drawImage(uint16_t drawPositionX, uint16_t drawPositionY, const uint8_t *bmp);
 

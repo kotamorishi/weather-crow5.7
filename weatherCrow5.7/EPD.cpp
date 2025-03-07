@@ -1,5 +1,4 @@
 #include "EPD.h"
-#include "EPDfont.h"
 #include "fonts.h"
 #include "string.h"
 
@@ -257,22 +256,22 @@ void EPD_DrawCircle(uint16_t X_Center,uint16_t Y_Center,uint16_t Radius,uint16_t
         color     Pixel color parameter (1 for black, 0 for white)
     Return Value: None
 *******************************************************************/
-void EPD_ShowChar(uint16_t x, uint16_t y, uint16_t chr, uint16_t font_size, uint16_t color) {
+void EPD_ShowChar(uint16_t x, uint16_t y, uint16_t chr, FontSize font_size, uint16_t color) {
     const FontSet *font;
 
     switch (font_size) {
-        case 8:
-		    font = &font_8;
-			break;
-        case 12:
-			font = &font_12;
-			break;
-        case 24:
-			font = &font_24;
-			break;
-		case 36:
-			font = &font_36;
-			break;
+        case FONT_SIZE_8:
+            font = &font_8;
+            break;
+        case FONT_SIZE_16:
+            font = &font_16;
+            break;
+        // case FONT_SIZE_24:
+        //     font = &font_24;
+        //     break;
+        case FONT_SIZE_36:
+            font = &font_36;
+            break;
         default:
             Serial.println("ERROR : Font size not supported!! You can add more fonts with ttfToEPD tool.");
             return;
@@ -316,7 +315,6 @@ void EPD_ShowChar(uint16_t x, uint16_t y, uint16_t chr, uint16_t font_size, uint
                 if (current_x >= Paint.widthMemory) break;
 				if (current_y >= Paint.heightMemory) break;
                 Paint_SetPixel(current_x++, current_y, (byte & (0x80 >> bit)) ? color : !color);
-
             }
         }
         current_y++;
@@ -329,28 +327,54 @@ void EPD_ShowChar(uint16_t x, uint16_t y, uint16_t chr, uint16_t font_size, uint
         x       String x-coordinate parameter
         y       String y-coordinate parameter
         chr     String to be displayed (null-terminated)
-        fontSetSize   Font height (e.g., 8, 12, 24)
+        fontSetSize   Font height (e.g., 8, 16, 24, 36)
         color   Pixel color parameter
     Return Value: None
 *******************************************************************/
-void EPD_ShowString(uint16_t x, uint16_t y, const char *chr, uint16_t fontSetSize, uint16_t color) {
+void EPD_ShowString(uint16_t x, uint16_t y, const char *chr, FontSize fontSetSize, uint16_t color) {
     const FontSet *font;
 
     switch (fontSetSize) {
-        case 8:  font = &font_8;  break;
-        case 12: font = &font_12; break;
-        case 24: font = &font_24; break;
-		case 36: font = &font_36; break;
+        case FONT_SIZE_8:  font = &font_8;  break;
+        case FONT_SIZE_16: font = &font_16; break;
+        //case FONT_SIZE_24: font = &font_24; break;
+		case FONT_SIZE_36: font = &font_36; break;
         default: return;
     }
 
     uint16_t x_pos = x;
     while (*chr != '\0') {
         uint16_t chr_index = *chr - font->char_start;
+
+        Serial.print(*chr);
+
+        // check if the chr is a line break
+        if(*chr == '\n') {
+            x_pos = x;
+            y += font->height + 3;
+            chr++;
+            continue;
+        }
+
+		if (*chr == ' ') {
+			 // Space character width is half of the font height
+			uint16_t space_width = font->height / 2;
+			if (space_width > MAX_SPACE_WIDTH) {
+				space_width = MAX_SPACE_WIDTH;
+			}
+			x_pos += space_width;
+			chr++;
+			if (x_pos >= (Paint.widthMemory) - LINE_BREAK_THRESHOLD) {
+				x_pos = x;
+				y += font->height + 2;
+			}
+			continue;
+		}
+
         if (chr_index < font->char_count) {
             const FontChar *current_char = font->chars[chr_index];
             EPD_ShowChar(x_pos, y, current_char->char_code, fontSetSize, color);
-            x_pos += current_char->width + font->space_width;
+            x_pos += current_char->width + (current_char->horizontal_offset * 2) + font->space_width;
         }
         chr++;
     }
@@ -372,59 +396,6 @@ uint32_t EPD_Pow(uint16_t m,uint16_t n)
 	}
 	return result;
 }
-
-/*******************************************************************
-	Function Description: Display a floating-point number
-	Interface Description: x     Number x-coordinate parameter
-						   y     Number y-coordinate parameter
-						   num   Floating-point number to be displayed
-						   len   Number of digits
-						   pre   Precision of the floating-point number
-						   size1 Display string font size
-						   Color Pixel color parameter
-	Return Value:  None
-*******************************************************************/
-
-void EPD_ShowFloatNum1(uint16_t x,uint16_t y,float num,uint8_t len,uint8_t pre,uint8_t sizey,uint8_t color)
-{
-	uint8_t t,temp,sizex;
-	uint16_t num1;
-	sizex=sizey/2;
-	num1=num*EPD_Pow(10,pre);
-	for(t=0;t<len;t++)
-	{
-		temp=(num1/EPD_Pow(10,len-t-1))%10;
-		if(t==(len-pre))
-		{
-			EPD_ShowChar(x+(len-pre)*sizex,y,'.',sizey,color);
-			t++;
-			len+=1;
-		}
-	 	EPD_ShowChar(x+t*sizex,y,temp+48,sizey,color);
-	}
-}
-
-
-// GUI display stopwatch
-void EPD_ShowWatch(uint16_t x,uint16_t y,float num,uint8_t len,uint8_t pre,uint8_t sizey,uint8_t color)
-{
-	uint8_t t,temp,sizex;
-	uint16_t num1;
-	sizex=sizey/2;
-	num1=num*EPD_Pow(10,pre);
-	for(t=0;t<len;t++)
-	{
-		temp=(num1/EPD_Pow(10,len-t-1))%10;
-		if(t==(len-pre))
-		{
-			EPD_ShowChar(x+(len-pre)*sizex+(sizex/2-2),y-6,':',sizey,color);
-			t++;
-			len+=1;
-		}
-	 	EPD_ShowChar(x+t*sizex,y,temp+48,sizey,color);
-	}
-}
-
 
 
 void EPD_ShowPicture(uint16_t x,uint16_t y,uint16_t sizex,uint16_t sizey,const uint8_t BMP[],uint16_t Color)
