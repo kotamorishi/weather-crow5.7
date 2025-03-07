@@ -5,275 +5,283 @@
 #include <Arduino_JSON.h>
 #include "EPD.h"
 #include "pic.h"
-#include "../weatherIcons.h"
+#include "weatherIcons.h"
+#include <esp_sleep.h>
 
 #define BAUD_RATE 115200
+#define HTTP_NOT_REQUESTED_YET 999
+#define STRING_BUFFER_SIZE 256
 
-/**
- * @brief this class works for only 5.7 inch e-paper display.
- */
-class WeatherCrow {
-  private:
-    uint8_t ImageBW[27200];
-    const char *ssid = WIFI_SSID;
-    const char *password = WIFI_PASSWORD;
-    String openWeatherMapApiKey = OPEN_WEATHER_MAP_API_KEY;
-    String apiParamLatitude = LATITUDE;
-    String apiParamLongtitude = LONGITUDE;
-    String jsonBuffer;
-    int httpResponseCode;
-    JSONVar weatherApiResponse;
+class WeatherCrow
+{
+private:
+  uint8_t ImageBW[27200];
+  const char *ssid = WIFI_SSID;
+  const char *password = WIFI_PASSWORD;
+  String openWeatherMapApiKey = OPEN_WEATHER_MAP_API_KEY;
+  String apiParamLatitude = LATITUDE;
+  String apiParamLongtitude = LONGITUDE;
+  String jsonBuffer;
+  String errorMessageBuffer;
+  int httpResponseCode = HTTP_NOT_REQUESTED_YET; // This is unbelievably declared as a global variable. Yes, it is used for the http response. why..
+  JSONVar weatherApiResponse;
 
-    struct WeatherInfo {
-      String weather;
-      int currentDateTime;
-      int sunrise;
-      int sunset;
-      String temperature;
-      String humidity;
-      String pressure;
-      String wind_speed;
-      String city;
-      int weather_flag;
-    } weatherInfo;
+  // Weather information structure
+  // You are still able to API response data via weatherApiResponse variable.
+  struct WeatherInfo
+  {
+    String weather;
+    int currentDateTime;
+    int sunrise;
+    int sunset;
+    String temperature;
+    String humidity;
+    String pressure;
+    String wind_speed;
+    String city;
+    String timezone;
+    String icon;
+  } weatherInfo;
 
-    void logPrint(const char *msg) { Serial.print(msg); }
-    void logPrint(int msg) { Serial.print(msg); }
-    void logPrint(String msg) { Serial.print(msg); }
+  void logPrint(const char *msg) { Serial.print(msg); }
+  void logPrint(int msg) { Serial.print(msg); }
+  void logPrint(String msg) { Serial.print(msg); }
 
-    void logPrintln(const char *msg) { Serial.println(msg); }
-    void logPrintln(int msg) { Serial.println(msg); }
-    void logPrintln(String msg) { Serial.println(msg); }
+  void logPrintln(const char *msg) { Serial.println(msg); }
+  void logPrintln(int msg) { Serial.println(msg); }
+  void logPrintln(String msg) { Serial.println(msg); }
 
-    String httpsGETRequest(const char* serverName) {
-      WiFiClientSecure client;
-      HTTPClient http;
-      client.setInsecure();
-      http.begin(client, serverName);
-      httpResponseCode = http.GET();
-      String payload = "{}";
-      if (httpResponseCode > 0) {
-        logPrint("HTTP Response code: ");
-        logPrintln(httpResponseCode);
-        payload = http.getString();
-      } else {
-        logPrint("Error code: ");
-        logPrintln(httpResponseCode);
-      }
-      http.end();
-      return payload;
+  String httpsGETRequest(const char *serverName)
+  {
+    WiFiClientSecure client;
+    HTTPClient http;
+    client.setInsecure();
+    http.begin(client, serverName);
+    httpResponseCode = http.GET();
+    String payload = "{}";
+    if (httpResponseCode > 0)
+    {
+      payload = http.getString();
     }
+    http.end();
+    return payload;
+  }
 
-    void connectToWiFi() {
-      WiFi.begin(ssid, password);
-      Serial.println("Wifi Connecting");
-      while (WiFi.status() != WL_CONNECTED) {
-        delay(500);
-        Serial.print(".");
-      }
-      Serial.println("");
+  void connectToWiFi()
+  {
+    WiFi.begin(ssid, password);
+    Serial.println("Wifi Connecting");
+    unsigned long startAttemptTime = millis();
+    while (WiFi.status() != WL_CONNECTED && millis() - startAttemptTime < 180000)
+    {             // 3 minutes timeout
+      delay(500); // wait for wireless connection
+      Serial.print(".");
     }
-
-    void screenPowerOn(){
-      pinMode(7, OUTPUT);
-      digitalWrite(7, HIGH);
+    if (WiFi.status() != WL_CONNECTED)
+    {
+      Serial.println("Failed to connect to WiFi. Retrying...");
+      errorMessageBuffer = "Failed to connect to the wifi.\n\n SSID : " + String(WIFI_SSID);
     }
+    Serial.println("");
+  }
 
-    void UI_clear_screen(){
-      // Clear image and initialize display
-      Paint_NewImage(ImageBW, EPD_W, EPD_H, Rotation, WHITE);
-      Paint_Clear(WHITE);
-      EPD_FastMode1Init();
-      EPD_Display_Clear();
-      EPD_Update();
-      EPD_Clear_R26A6H();
-    }
+  void screenPowerOn()
+  {
+    pinMode(7, OUTPUT);
+    digitalWrite(7, HIGH);
+  }
 
-    void UI_show_message(char *message){
-      UI_clear_screen();
-      char buffer[128];
-      memset(buffer, 0, sizeof(buffer));
-      snprintf(buffer, sizeof(buffer), "%s ", message);
-      //EPD_ShowString(20, 0, buffer, 8, BLACK);
-      EPD_ShowString(20, 20, buffer, 12, BLACK);
-      EPD_ShowString(20, 32, buffer, 16, BLACK);
-      EPD_ShowString(20, 58, buffer, 24, BLACK);
-      // EPD_ShowString(20, 128, buffer, 48, BLACK);
-      // EPD_ShowString(20, 172, buffer, 64, BLACK);
-      logPrint("UI_show_message : ");
-      logPrintln(message);
-      EPD_Display(ImageBW);
-      EPD_PartUpdate();
-      EPD_DeepSleep();
-    }
+  void UI_clear_screen()
+  {
+    Paint_NewImage(ImageBW, EPD_W, EPD_H, Rotation, WHITE);
+    Paint_Clear(WHITE);
+    EPD_FastMode1Init();
+    EPD_Display_Clear();
+    EPD_Update();
+    EPD_Clear_R26A6H();
+  }
 
-    void UI_test(){
-        UI_clear_screen();
-        // Show background image and weather icon
-        //EPD_drawImage(0,   0, wi_barometer_256);
-        EPD_drawImage(0, 0, leo_face_small);
-        EPD_drawImage(128, 0, leo_face_midium);
-        EPD_drawImage(256, 0, leo_face_large);
-       // EPD_drawImage(256, 0, wi_barometer_256);
+  void UI_error_message(char *titile, char *description)
+  {
+    UI_clear_screen();
 
-        EPD_Display(ImageBW);
-      EPD_PartUpdate();
-      EPD_DeepSleep();
+    uint16_t baseXpos = 258;
+    char buffer[STRING_BUFFER_SIZE];
 
-    }
+    // icon
+    EPD_drawImage(60, 20, error_lg);
+    EPD_DrawLine(baseXpos, 110, 740, 110, BLACK);
 
-    void UI_error_message(char *titile, char *description){
-      UI_clear_screen();
+    // title
+    memset(buffer, 0, sizeof(buffer));
+    snprintf(buffer, sizeof(buffer), "%s ", titile);
+    EPD_ShowString(baseXpos, 70, buffer, FONT_SIZE_36, BLACK);
 
-      uint16_t baseXpos = 258;
+    // description
+    memset(buffer, 0, sizeof(buffer));
+    snprintf(buffer, sizeof(buffer), "%s ", description);
+    EPD_ShowString(baseXpos, 140, buffer, FONT_SIZE_16, BLACK);
 
-      // icon
-      EPD_drawImage(60, 60, error_midium);
-      EPD_DrawLine(baseXpos, 110, 740, 110, BLACK);
+    EPD_Display(ImageBW);
+    EPD_PartUpdate();
+    EPD_DeepSleep();
+  }
 
-      char buffer[128];
+  void UI_weather_forecast()
+  {
+    UI_clear_screen();
+    char buffer[STRING_BUFFER_SIZE];
 
-      // title
-      memset(buffer, 0, sizeof(buffer));
-      snprintf(buffer, sizeof(buffer), "%s ", titile);
-      EPD_ShowString(baseXpos, 40, buffer, 48, BLACK);
+    memset(buffer, 0, sizeof(buffer));
+    snprintf(buffer, sizeof(buffer), "%s ", weatherInfo.timezone.c_str());
+    EPD_ShowString(300, 70, buffer, FONT_SIZE_36, BLACK);
 
-      // // description
-      memset(buffer, 0, sizeof(buffer));
-      snprintf(buffer, sizeof(buffer), "%s ", description);
-      EPD_ShowString(baseXpos, 130, buffer, 16, BLACK);
+    memset(buffer, 0, sizeof(buffer));
+    snprintf(buffer, sizeof(buffer), "%s C", weatherInfo.temperature.c_str());
+    EPD_ShowString(300, 130, buffer, FONT_SIZE_36, BLACK);
 
+    // EPD_drawImage(360, 130, wi_celsius_xs);
 
-      EPD_Display(ImageBW);
-      EPD_PartUpdate();
-      EPD_DeepSleep();
+    // Debug the icon name
+    Serial.print("Icon ID from API: '");
+    Serial.print(weatherInfo.icon);
+    Serial.println("'");
 
-    }
+    String icon_name = "icon_" + weatherInfo.icon + "_lg";
+    Serial.print("Icon name : '");
+    Serial.print(icon_name);
+    Serial.println("'");
 
-    void UI_weather_forecast(){
-      UI_clear_screen();
-      char buffer[40];
+    EPD_drawImage(20, 30, icon_map[icon_name.c_str()]);
 
+    EPD_Display(ImageBW);
+    EPD_PartUpdate();
+    EPD_DeepSleep();
+  }
 
-      //EPD_ShowPicture(4, 3, 432, 128, Weather_Num[weatherInfo.weather_flag], WHITE);
-      // Draw partition lines
-      // EPD_DrawLine(0, 190, 792, 190, BLACK);
-      // EPD_DrawLine(530, 0, 530, 270, BLACK);
-      // // Display city, temperature, humidity, wind speed and pressure
-      // memset(buffer, 0, sizeof(buffer));
-      // snprintf(buffer, sizeof(buffer), "%s ", weatherInfo.city);
-      // EPD_ShowString(620, 60, buffer, 24, BLACK);
-      // memset(buffer, 0, sizeof(buffer));
-      // // Changed the following line to include buffer size as the second argument.
-      // snprintf(buffer, sizeof(buffer), "%s C", weatherInfo.temperature);
-      // EPD_ShowString(340, 240, buffer, 24, BLACK);
-      // memset(buffer, 0, sizeof(buffer));
-      // snprintf(buffer, sizeof(buffer), "%s ", weatherInfo.humidity);
-      // EPD_ShowString(620, 150, buffer, 24, BLACK);
-      // memset(buffer, 0, sizeof(buffer));
-      // snprintf(buffer, sizeof(buffer),"%s m/s", weatherInfo.wind_speed);
-      // EPD_ShowString(135, 240, buffer, 24, BLACK);
-      // memset(buffer, 0, sizeof(buffer));
-      // snprintf(buffer, sizeof(buffer),"%s hpa", weatherInfo.pressure);
-      // EPD_ShowString(620, 240, buffer, 24, BLACK);
-      EPD_Display(ImageBW);
-      EPD_PartUpdate();
-      EPD_DeepSleep();
-    }
+  bool getWeatherInfo(uint8_t retry_count = 0)
+  {
+    httpResponseCode = HTTP_NOT_REQUESTED_YET;
+    if (WiFi.status() == WL_CONNECTED)
+    {
+      String apiEndPoint = "https://api.openweathermap.org/data/3.0/onecall?lat=" +
+                           apiParamLatitude + "&lon=" + apiParamLongtitude +
+                           "&exclude=minutely"
+                           "&APPID=" +
+                           openWeatherMapApiKey + "&units=metric";
+      Serial.print("getWeatherInfo retry count: ");
+      Serial.println(retry_count);
+      Serial.print(" API endpoint: ");
+      Serial.println(apiEndPoint);
+      Serial.print("[before] HTTP response code: ");
+      Serial.println(httpResponseCode);
 
-    bool getWeatherInfo(){
-      if (WiFi.status() == WL_CONNECTED) {
-        String apiEndPoint = "https://api.openweathermap.org/data/3.0/onecall?lat=" +
-                               apiParamLatitude + "&lon=" + apiParamLongtitude +
-                               "&APPID=" + openWeatherMapApiKey + "&units=metric";
-        while (httpResponseCode != 200) {
-          jsonBuffer = httpsGETRequest(apiEndPoint.c_str());
-          logPrintln(jsonBuffer);
-          weatherApiResponse = JSON.parse(jsonBuffer);
-          if (JSON.typeof(weatherApiResponse) == "undefined") {
-            logPrintln("Parsing input failed!");
-            return false;
-          }
-          delay(10000);
-        }
-        weatherInfo.weather = JSON.stringify(weatherApiResponse["weather"][0]["main"]);
-        weatherInfo.currentDateTime = JSON.stringify(weatherApiResponse["current"]["dt"]).toInt();
-        weatherInfo.sunrise = JSON.stringify(weatherApiResponse["current"]["sunrise"]).toInt();
-        weatherInfo.sunset = JSON.stringify(weatherApiResponse["current"]["sunset"]).toInt();
-        weatherInfo.temperature = JSON.stringify(weatherApiResponse["current"]["temp"]);
-        weatherInfo.humidity = JSON.stringify(weatherApiResponse["current"]["humidity"]);
-        weatherInfo.pressure = JSON.stringify(weatherApiResponse["current"]["pressure"]);
-        weatherInfo.wind_speed = JSON.stringify(weatherApiResponse["wind"]["speed"]);
-        weatherInfo.city = JSON.stringify(weatherApiResponse["name"]);
-        logPrint("String weather: ");
-        logPrintln(weatherInfo.weather);
-        logPrint("String Temperature: ");
-        logPrintln(weatherInfo.temperature);
-        logPrint("String humidity: ");
-        logPrintln(weatherInfo.humidity);
-        logPrint("String pressure: ");
-        logPrintln(weatherInfo.pressure);
-        logPrint("String wind_speed: ");
-        logPrintln(weatherInfo.wind_speed);
-        logPrint("String city: ");
-        logPrintln(weatherInfo.city);
-        if (weatherInfo.weather.indexOf("clouds") != -1 || weatherInfo.weather.indexOf("Clouds") != -1) {
-          weatherInfo.weather_flag = 1;
-        } else if (weatherInfo.weather.indexOf("clear sky") != -1 || weatherInfo.weather.indexOf("Clear sky") != -1) {
-          weatherInfo.weather_flag = 3;
-        } else if (weatherInfo.weather.indexOf("rain") != -1 || weatherInfo.weather.indexOf("Rain") != -1) {
-          weatherInfo.weather_flag = 5;
-        } else if (weatherInfo.weather.indexOf("thunderstorm") != -1 || weatherInfo.weather.indexOf("Thunderstorm") != -1) {
-          weatherInfo.weather_flag = 2;
-        } else if (weatherInfo.weather.indexOf("snow") != -1 || weatherInfo.weather.indexOf("Snow") != -1) {
-          weatherInfo.weather_flag = 4;
-        } else if (weatherInfo.weather.indexOf("mist") != -1 || weatherInfo.weather.indexOf("Mist") != -1) {
-          weatherInfo.weather_flag = 0;
-        }
-        return true;
-      } else {
-        logPrintln("WiFi Disconnected");
+      Serial.print("Http get ");
+
+      jsonBuffer = httpsGETRequest(apiEndPoint.c_str());
+
+      if (httpResponseCode != HTTP_CODE_OK)
+      {
+        errorMessageBuffer = "Weather API failed with HTTP code : " + String(httpResponseCode) + " \n\nThis typically happens when the weather API server side issue or the API key is invalid.";
         return false;
       }
+
+      weatherApiResponse = JSON.parse(jsonBuffer);
+      if (JSON.typeof(weatherApiResponse) == "undefined")
+      {
+        errorMessageBuffer = "Unexpected Weather API response.\n\nThis typically happens when the weather API server side has issues and it will resolve soon.";
+        return false;
+      }
+
+      weatherInfo.weather = String((const char *)weatherApiResponse["current"]["weather"][0]["main"]);
+      weatherInfo.icon = String((const char *)weatherApiResponse["current"]["weather"][0]["icon"]);
+      weatherInfo.currentDateTime = JSON.stringify(weatherApiResponse["current"]["dt"]).toInt();
+      weatherInfo.sunrise = JSON.stringify(weatherApiResponse["current"]["sunrise"]).toInt();
+      weatherInfo.sunset = JSON.stringify(weatherApiResponse["current"]["sunset"]).toInt();
+      weatherInfo.temperature = JSON.stringify(weatherApiResponse["current"]["temp"]);
+      weatherInfo.humidity = JSON.stringify(weatherApiResponse["current"]["humidity"]);
+      weatherInfo.pressure = JSON.stringify(weatherApiResponse["current"]["pressure"]);
+      weatherInfo.wind_speed = JSON.stringify(weatherApiResponse["wind"]["speed"]);
+      weatherInfo.city = JSON.stringify(weatherApiResponse["name"]);
+      weatherInfo.timezone = JSON.stringify(weatherApiResponse["timezone"]);
+
+      logPrint("String weather: ");
+      logPrintln(weatherInfo.weather);
+      logPrint("String Temperature: ");
+      logPrintln(weatherInfo.temperature);
+      logPrint("String humidity: ");
+      logPrintln(weatherInfo.humidity);
+      logPrint("String pressure: ");
+      logPrintln(weatherInfo.pressure);
+      logPrint("String wind_speed: ");
+      logPrintln(weatherInfo.wind_speed);
+      logPrint("String city: ");
+      logPrintln(weatherInfo.city);
+      logPrint("String timezone: ");
+      logPrintln(weatherInfo.timezone);
+      return true;
     }
-
-  public:
-    void begin(){
-      Serial.begin(BAUD_RATE);
-      //connectToWiFi();
-      Serial.println(WiFi.localIP());
-      screenPowerOn();
-      EPD_GPIOInit();
+    else
+    {
+      errorMessageBuffer = "Wireless network not established.\n\nSSID : " + String(WIFI_SSID);
+      return false;
     }
+  }
 
-    void run(){
+  void UI_error()
+  {
+    char title[] = "Someting went wrong.";
+    char description[STRING_BUFFER_SIZE];
+    memset(description, 0, sizeof(description));
+    strncpy(description, errorMessageBuffer.c_str(), sizeof(description) - 1);
+    UI_error_message(title, description);
+  }
 
-      char msg[] = "1234567890 !BCDEFGHIJKLMNOPQRSTUVWXYZ";
-      UI_show_message(msg);
-      delay(1000 * 60 * REFRESH_MINUITES);
+public:
+  void begin()
+  {
+    errorMessageBuffer = "";
+    delay(1000); // Delay to make sure serial monitor is ready
+    Serial.begin(BAUD_RATE);
+    screenPowerOn();
+    EPD_GPIOInit();
+  }
 
-      // char msg[] = "ERROR";
-      // char description[] = "Here is the description of the error.";
-      // UI_error_message(msg,description);
-      // delay(1000 * 60 * REFRESH_MINUITES);
-
+  void run()
+  {
+    try
+    {
+      delay(3000);
       connectToWiFi();
-      if (!getWeatherInfo()){
-        char msg[] = "Failed to get weather infomation.";
-        UI_show_message(msg);
-      } else {
+      if (!getWeatherInfo())
+      {
+        char title[] = "Failed to get weather info.";
+        char msg[] = "Please check your internet connection.\nThis message typically appears when the device is unable to connect to the wifi or internet.";
+        UI_error_message(title, msg);
+      }
+      else
+      {
         UI_weather_forecast();
       }
-      delay(1000 * 60 * REFRESH_MINUITES);
     }
+    catch (const std::exception &e)
+    {
+      errorMessageBuffer = String("Exception: ") + e.what();
+      UI_error();
+    }
+  }
 };
 
 WeatherCrow weatherCrow;
 
-void setup(){
+void setup()
+{
   weatherCrow.begin();
 }
 
-void loop(){
+void loop()
+{
   weatherCrow.run();
+  esp_sleep_enable_timer_wakeup(1000000ULL * 60ULL * REFRESH_MINUITES);
+  esp_deep_sleep_start();
 }

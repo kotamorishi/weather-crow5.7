@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+#define MAX_SPACE_WIDTH 12
+#define LINE_BREAK_THRESHOLD 80
 
 typedef struct {
     uint8_t char_code;      // Character itself
@@ -14,7 +16,6 @@ typedef struct {
     const uint8_t *bitmap;  // Pointer to bitmap data
 } FontChar;
 
-
 typedef struct {
     uint8_t height;         // Font height in pixels
     uint8_t char_start;     // First character code (usually 0x20 for space)
@@ -25,8 +26,13 @@ typedef struct {
 
 // Declare external font variables
 extern const FontSet font_8;
-extern const FontSet font_12;
-extern const FontSet font_24;
+extern const FontSet font_16;
 extern const FontSet font_36;
+
+typedef enum {
+    FONT_SIZE_8 = 8,
+    FONT_SIZE_16 = 16,
+    FONT_SIZE_36 = 36
+} FontSize;
 
 #endif // FONTS_H

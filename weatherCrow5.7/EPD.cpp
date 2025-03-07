@@ -103,8 +103,8 @@ void Paint_SetPixel(uint16_t Xpoint,uint16_t Ypoint,uint16_t Color)
 					X=Ypoint;
 					Y=Paint.heightMemory-Xpoint-1;
 					break;
-				default:
-						return;
+            default:
+                    return;
     }
 		Addr=X/8+Y*Paint.widthByte;
     Rdata=Paint.Image[Addr];
@@ -457,10 +457,13 @@ void EPD_drawImage(uint16_t drawPositionX, uint16_t drawPositionY, const uint8_t
 
             for(uint8_t bit = 0; bit < bitsThisByte; bit++) {
                 if(temp & 0x80) {
-                    Paint_SetPixel(drawPositionX, drawPositionY, BLACK);
-                } else {
-                    Paint_SetPixel(drawPositionX, drawPositionY, WHITE);
+                    if (drawPositionX < Paint.widthMemory && drawPositionY < Paint.heightMemory) {
+                        Paint_SetPixel(drawPositionX, drawPositionY, BLACK);
+                    }
                 }
+                // else {
+                //     Paint_SetPixel(drawPositionX, drawPositionY, WHITE);
+                // }
                 drawPositionX++;
                 temp <<= 1;
             }

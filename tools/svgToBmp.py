@@ -7,8 +7,8 @@ from collections import defaultdict
 # Define target output image widths
 imageSize = [
     (32,'xs'),
-    # (64,'sm'),
-    # (128,'md'),
+    (64,'sm'),
+    (128,'md'),
     (250,'lg')
 ]
 
