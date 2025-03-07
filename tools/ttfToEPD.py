@@ -98,7 +98,7 @@ def ttf_to_c_font(ttf_file, output_file, font_height):
             f.write(f'// {char_data["char"]} (U+{char_data["code"]:04X})\n')
             f.write(f'const uint8_t font_{font_height}_{ord(char_data["char"]):02x}[] = {{\n')
             for i, byte in enumerate(char_data['bitmap']):
-                f.write(f'    0b{byte:08b}' + (',' if i < len(char_data['bitmap']) - 1 else '') + '\n')
+                f.write(f'  0b{byte:08b}' + (',' if (i + 1) % char_data['bytes_per_row'] != 0 else ',\n'))
             f.write('};\n\n')
 
         for char_data in chars:
@@ -123,7 +123,7 @@ def ttf_to_c_font(ttf_file, output_file, font_height):
         f.write(f'    .height = (uint8_t){font_height},\n')
         f.write(f'    .char_start = 0x21,\n')
         f.write(f'    .char_count = (uint8_t)95,\n')
-        f.write(f'    .space_width = (int8_t)0,\n')
+        f.write(f'    .space_width = (int8_t){ int(font_height * 0.1) },\n')
         f.write(f'    .chars = font_{font_height}_chars\n')
         f.write('};\n')
 

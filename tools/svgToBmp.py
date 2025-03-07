@@ -6,9 +6,10 @@ from collections import defaultdict
 
 # Define target output image widths
 imageSize = [
-    (64,'small'),
-    (128,'midium'),
-    (256,'large')
+    (32,'xs'),
+    # (64,'sm'),
+    # (128,'md'),
+    (250,'lg')
 ]
 
 # this scripte will genraate a temporary PNG file which is totall unnessary. just I want to see the output of the image.
@@ -22,6 +23,7 @@ class SvgToBmpConverter:
         self.svg_dir = os.path.join(os.path.dirname(__file__), "../svg")
         self.output_file = os.path.join(os.path.dirname(__file__), "weatherIcons.h")
         self.category_base_sizes = {}  # Store base sizes for each category
+        self.generated_icons = []  # Track all generated icon names
 
     def scan_svg_files(self):
         """Scan SVG files and determine base aspect ratios for each category"""
@@ -155,6 +157,7 @@ class SvgToBmpConverter:
     def generate_header_content(self):
         """Generate header content for all sizes and categories"""
         content = []
+        self.generated_icons = []  # Reset the icon list
         category_files = self.scan_svg_files()
 
         for size_tuple in sorted(imageSize):  # size_tuple is now (width, label)
@@ -175,6 +178,9 @@ class SvgToBmpConverter:
                     arr = self.image_to_bmp_array("tmp.png", debug=False)
                     base_name = os.path.splitext(os.path.basename(file_path))[0].replace('-', '_')
                     array_name = f"{base_name}_{label}"  # Use label instead of width
+                    icon_key = f"{base_name}_{label}"  # Create key for the icon map
+                    self.generated_icons.append((icon_key, array_name))  # Store for map generation
+
                     content.append(f"// {array_name}: {actual_width}x{actual_height} pixels")
                     content.append(f"const unsigned char {array_name}[] = {{")
 
@@ -194,15 +200,34 @@ class SvgToBmpConverter:
 
         return "\n".join(content)
 
+    def generate_icon_map(self):
+        """Generate C++ map code for icon lookup"""
+        map_content = []
+        map_content.append("\n// Icon mapping for convenient lookup")
+        map_content.append("std::map<std::string, const unsigned char*> icon_map = {")
+
+        # Add each icon to the map with proper indentation
+        for icon_key, array_name in self.generated_icons:
+            map_content.append(f"  {{\"{icon_key}\", {array_name}}},")
+
+        # Remove trailing comma from the last entry if there are any entries
+        if self.generated_icons:
+            map_content[-1] = map_content[-1][:-1]  # Remove trailing comma
+
+        map_content.append("};")
+        return "\n".join(map_content)
+
     @staticmethod
-    def generate_header_file(all_content):
-        """Write complete header file with all sizes"""
+    def generate_header_file(all_content, icon_map_content):
+        """Write complete header file with all sizes and icon map"""
         output_file = os.path.join(os.path.dirname(__file__), "weatherIcons.h")
         with open(output_file, "w") as out:
             guard_name = "WEATHER_ICONS_H"
             out.write("// weatherIcons.h\n")
             out.write(f"#ifndef {guard_name}\n")
             out.write(f"#define {guard_name}\n\n")
+            out.write("#include <map>\n")
+            out.write("#include <string>\n\n")
             out.write("#ifdef __cplusplus\n")
             out.write('extern "C" {\n')
             out.write("#endif\n\n")
@@ -216,8 +241,11 @@ class SvgToBmpConverter:
             # Write all size variants
             out.write(all_content)
 
+            # Write icon map
+            out.write(icon_map_content)
+
             # Close guards
-            out.write("#ifdef __cplusplus\n")
+            out.write("\n#ifdef __cplusplus\n")
             out.write("}\n")
             out.write("#endif\n\n")
             out.write(f"#endif /* {guard_name} */\n")
@@ -226,5 +254,6 @@ class SvgToBmpConverter:
 if __name__ == "__main__":
     converter = SvgToBmpConverter(width=128, threshold=100)
     content = converter.generate_header_content()
-    SvgToBmpConverter.generate_header_file(content)
-    print("\nGenerated weatherIcons.h with all size variants")
+    icon_map = converter.generate_icon_map()
+    SvgToBmpConverter.generate_header_file(content, icon_map)
+    print("\nGenerated weatherIcons.h with all size variants and icon map")
