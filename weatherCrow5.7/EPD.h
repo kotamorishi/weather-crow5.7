@@ -34,7 +34,8 @@ void EPD_DrawLine(uint16_t Xstart, uint16_t Ystart, uint16_t Xend, uint16_t Yend
 void EPD_DrawRectangle(uint16_t Xstart, uint16_t Ystart, uint16_t Xend, uint16_t Yend, uint16_t Color, uint8_t mode); // Draw a rectangle
 void EPD_DrawCircle(uint16_t X_Center, uint16_t Y_Center, uint16_t Radius, uint16_t Color, uint8_t mode); // Draw a circle
 void EPD_ShowChar(uint16_t x, uint16_t y, uint16_t chr, FontSize font_size, uint16_t color); // Display a character
-void EPD_ShowString(uint16_t x, uint16_t y, const char *chr, FontSize font_size, uint16_t color); // Display a string
+void EPD_ShowString(uint16_t x, uint16_t y, const char *chr, FontSize font_size, uint16_t color, bool disableLineBreak = false); // Display a string
+void EPD_ShowStringRightAligned(uint16_t right_x, uint16_t y, const char *chr, FontSize font_size, uint16_t color); // Display a string with right alignment (no line breaks)
 void EPD_ShowPicture(uint16_t x, uint16_t y, uint16_t sizex, uint16_t sizey, const uint8_t BMP[], uint16_t Color); // Display a picture
 void EPD_ClearWindows(uint16_t xs, uint16_t ys, uint16_t xe, uint16_t ye, uint16_t color); // Clear a window area with a color
 

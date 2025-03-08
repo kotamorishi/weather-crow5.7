@@ -6,10 +6,10 @@ from collections import defaultdict
 
 # Define target output image widths
 imageSize = [
-    (32,'xs'),
+    # (32,'xs'),
     (64,'sm'),
     (128,'md'),
-    (250,'lg')
+    (200,'lg')
 ]
 
 # this scripte will genraate a temporary PNG file which is totall unnessary. just I want to see the output of the image.

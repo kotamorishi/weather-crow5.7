@@ -16,11 +16,18 @@ imageSize = [
 ]
 ```
 
-
 ussage:
 ```bash
 python3 svgToBmp.py
 ```
+
+Note: The BMP file is not compressed and stored it as C++ header file.
+So if you have a large image, it may not fit in the memory.
+
+If it does not fit within the memory, e-paper will not start and keep rebooting.
+when it happens you can see the error message on the serial monitor. it may say `Heap error`.
+**Watch out serial monitor carefully** when you add a new image.
+
 
 ## TTF font to EPD font converter
 This tool converts TTF font to EPD font.
@@ -43,8 +50,9 @@ typedef struct {
 
 // Declare external font variables
 extern const FontSet font_8;
-extern const FontSet font_12;
+//extern const FontSet font_16;
 extern const FontSet font_24;
+extern const FontSet font_36;
 ```
 
 Fonts
