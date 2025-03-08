@@ -2,7 +2,7 @@
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
 #include <HTTPClient.h>
-#include <Arduino_JSON.h>
+#include <ArduinoJson.h>
 #include "EPD.h"
 #include "weatherIcons.h"
 #include <esp_sleep.h>
@@ -10,6 +10,7 @@
 #define BAUD_RATE 115200
 #define HTTP_NOT_REQUESTED_YET -999
 #define STRING_BUFFER_SIZE 256
+#define JSON_CAPACITY 32768 // 32KB
 
 class WeatherCrow
 {
@@ -22,8 +23,9 @@ private:
   String apiParamLongtitude = LONGITUDE;
   String jsonBuffer;
   String errorMessageBuffer;
-  int httpResponseCode = HTTP_NOT_REQUESTED_YET; // This is unbelievably declared as a global variable. Yes, it is used for the http response. why..
-  JSONVar weatherApiResponse;
+  int httpResponseCode = HTTP_NOT_REQUESTED_YET;
+  // Replace JSONVar with DynamicJsonDocument
+  DynamicJsonDocument weatherApiResponse = DynamicJsonDocument(JSON_CAPACITY);
 
   // Weather information structure
   // You are still able to API response data via weatherApiResponse variable.
@@ -256,33 +258,36 @@ private:
         return false;
       }
 
-      weatherApiResponse = JSON.parse(jsonBuffer);
-      if (JSON.typeof(weatherApiResponse) == "undefined")
-      {
-        errorMessageBuffer = "Unexpected Weather API response.\n\nThis typically happens when the weather API server side has issues and it will resolve soon.";
+      // Parse JSON using ArduinoJson
+      DeserializationError error = deserializeJson(weatherApiResponse, jsonBuffer);
+      if (error) {
+        Serial.print(F("deserializeJson() failed: "));
+        Serial.println(error.c_str());
+        errorMessageBuffer = "JSON parsing error: " + String(error.c_str());
         return false;
       }
 
-      weatherInfo.weather = String((const char *)weatherApiResponse["current"]["weather"][0]["main"]);
-      weatherInfo.icon = String((const char *)weatherApiResponse["current"]["weather"][0]["icon"]);
-      weatherInfo.currentDateTime = JSON.stringify(weatherApiResponse["current"]["dt"]).toInt() + JSON.stringify(weatherApiResponse["timezone_offset"]).toInt();
-      weatherInfo.sunrise = JSON.stringify(weatherApiResponse["current"]["sunrise"]).toInt();
-      weatherInfo.sunset = JSON.stringify(weatherApiResponse["current"]["sunset"]).toInt();
-      weatherInfo.temperature = JSON.stringify(weatherApiResponse["current"]["temp"]);
-      weatherInfo.humidity = JSON.stringify(weatherApiResponse["current"]["humidity"]);
-      weatherInfo.pressure = JSON.stringify(weatherApiResponse["current"]["pressure"]);
-      weatherInfo.wind_speed = JSON.stringify(weatherApiResponse["wind"]["speed"]);
-      weatherInfo.timezone = JSON.stringify(weatherApiResponse["timezone"]);
+      // Extract values using ArduinoJson syntax
+      weatherInfo.weather = weatherApiResponse["current"]["weather"][0]["main"].as<String>();
+      weatherInfo.icon = weatherApiResponse["current"]["weather"][0]["icon"].as<String>();
+      weatherInfo.currentDateTime = weatherApiResponse["current"]["dt"].as<long>() + weatherApiResponse["timezone_offset"].as<long>();
+      weatherInfo.sunrise = weatherApiResponse["current"]["sunrise"].as<long>();
+      weatherInfo.sunset = weatherApiResponse["current"]["sunset"].as<long>();
+      weatherInfo.temperature = String(weatherApiResponse["current"]["temp"].as<float>(), 1);
+      weatherInfo.humidity = String(weatherApiResponse["current"]["humidity"].as<int>());
+      weatherInfo.pressure = String(weatherApiResponse["current"]["pressure"].as<int>());
+      weatherInfo.wind_speed = String(weatherApiResponse["current"]["wind_speed"].as<float>(), 1);
+      weatherInfo.timezone = weatherApiResponse["timezone"].as<String>();
 
       // Find the position of the decimal point
       int decimalPos = weatherInfo.temperature.indexOf('.');
-      weatherInfo.tempIntegerPart = String(weatherInfo.temperature.substring(0, decimalPos).toInt());  // -0 -> 0
-      weatherInfo.tempDecimalPart = String(weatherInfo.temperature.substring(decimalPos + 1).toInt()); // 00 -> 0
-      // if the decimal part length is more than 2, cut it to 1
+      weatherInfo.tempIntegerPart = String(weatherInfo.temperature.substring(0, decimalPos).toInt());
+      weatherInfo.tempDecimalPart = String(weatherInfo.temperature.substring(decimalPos + 1).toInt());
       if (weatherInfo.tempDecimalPart.length() > 1)
       {
         weatherInfo.tempDecimalPart = weatherInfo.tempDecimalPart.substring(0, 1);
       }
+
       return true;
     }
     else
@@ -292,37 +297,166 @@ private:
     }
   }
 
-  void UI_weather_future_forecast(uint16_t base_x, uint16_t base_y, uint16_t length)
-  {
-
+  void UI_weather_future_forecast(uint16_t base_x, uint16_t base_y, uint16_t length) {
     uint16_t x = base_x;
     uint16_t y = base_y;
     char buffer[STRING_BUFFER_SIZE];
 
-    for (uint16_t i = 1, counter = 0; counter < length; i += 2, counter++)
-    {
-      String icon = String((const char *)weatherApiResponse["hourly"][i]["weather"]["icon"]);
-      String icon_name = "icon_" + weatherInfo.icon + "_sm";
-      EPD_drawImage(x, y, icon_map[icon_name.c_str()]);
+    // Check if hourly data exists
+    if (!weatherApiResponse.containsKey("hourly")) {
+        memset(buffer, 0, sizeof(buffer));
+        snprintf(buffer, sizeof(buffer), "%s", "Error: API not responding with hourly data.");
+        EPD_ShowString(x, y, buffer, FONT_SIZE_16, BLACK, true);
+        return;
+    }
 
-      // temperature
-      memset(buffer, 0, sizeof(buffer));
-      snprintf(buffer, sizeof(buffer), "%s", JSON.stringify(weatherApiResponse["hourly"][i]["temp"]).c_str());
-      EPD_ShowString(x + 14, y - 32, buffer, FONT_SIZE_16, BLACK, true);
+    // Get the hourly array length
+    size_t availableHours = weatherApiResponse["hourly"].size();
+    if (availableHours == 0) {
+        memset(buffer, 0, sizeof(buffer));
+        snprintf(buffer, sizeof(buffer), "%s", "Error: API responding with ZERO forecast data.");
+        EPD_ShowString(x, y, buffer, FONT_SIZE_16, BLACK, true);
+        return;
+    }
 
-      // Time 10 AM, 9 PM or 12 PM
-      long forecastTimeInt = JSON.stringify(weatherApiResponse["hourly"][i]["dt"]).toInt() + JSON.stringify(weatherApiResponse["timezone_offset"]).toInt();
-      String forecastTime = convertUnixTimeToShortDateTimeString(forecastTimeInt);
-      memset(buffer, 0, sizeof(buffer));
-      snprintf(buffer, sizeof(buffer), "%s", forecastTime.c_str());
-      EPD_ShowString(x + 14, y + 64, buffer, FONT_SIZE_16, BLACK, true);
+    // Limit to either requested length or available data
+    int forecastsToShow = min(length, (uint16_t)availableHours);
 
-      //EPD_DrawLine(x + 90, y - 32, x + 90, y + 42, BLACK);
+    for (uint16_t i = 1, counter = 0; counter < forecastsToShow; i += 2, counter++) {
 
-      // offset for the next icon
-      x = x + 105;
+        // Safely check if the hourly entry exists
+        if (i >= availableHours) {
+            Serial.println("Index out of bounds for hourly forecast");
+            break;
+        }
+
+        JsonObject hourly = weatherApiResponse["hourly"][i];
+
+        if (!hourly.containsKey("weather") || hourly["weather"].size() == 0) {
+            Serial.println("No weather data for this hour");
+            continue;
+        }
+
+        String icon;
+        if (hourly["weather"][0].containsKey("icon")) {
+            icon = "icon_" + hourly["weather"][0]["icon"].as<String>();
+        } else {
+            Serial.println("No icon data for this hour");
+            icon = "na_md"; // default fallback icon
+        }
+
+        snprintf(buffer, sizeof(buffer), "%s_sm", icon.c_str());
+        if (icon_map.count(buffer) > 0) {
+            EPD_drawImage(x, y, icon_map[buffer]);
+        } else {
+            Serial.print("Icon not found in icon_map: ");
+            Serial.println(buffer);
+            // Use a default icon as fallback
+            EPD_drawImage(x, y, icon_map["leo_face_sm"]);
+        }
+
+        // temperature
+        memset(buffer, 0, sizeof(buffer));
+        float temp = hourly["temp"].as<float>();
+        int tempInt = (int)temp; // Get the integer part
+        snprintf(buffer, sizeof(buffer), "%d c", tempInt);
+        EPD_ShowString(x + 14, y + 92, buffer, FONT_SIZE_16, BLACK, true);
+
+        // Time 10 AM, 9 PM or 12 PM
+        long forecastTimeInt = hourly["dt"].as<long>() + weatherApiResponse["timezone_offset"].as<long>();
+        String forecastTime = convertUnixTimeToShortDateTimeString(forecastTimeInt);
+        memset(buffer, 0, sizeof(buffer));
+        snprintf(buffer, sizeof(buffer), "%s", forecastTime.c_str());
+        EPD_ShowString(x + 14, y + 72, buffer, FONT_SIZE_16, BLACK, true);
+
+        // offset for the next icon
+        x = x + 105;
     }
   }
+
+  void UI_graph(uint16_t base_x, uint16_t base_y) {
+    uint16_t x = base_x;
+    uint16_t y = base_y;
+    char buffer[STRING_BUFFER_SIZE];
+
+    // Check if hourly data exists
+    if (!weatherApiResponse.containsKey("hourly")) {
+        memset(buffer, 0, sizeof(buffer));
+        snprintf(buffer, sizeof(buffer), "%s", "Error: API not responding with hourly data.");
+        EPD_ShowString(x, y, buffer, FONT_SIZE_16, BLACK, true);
+        return;
+    }
+
+    // Get the hourly array length
+    size_t availableHours = weatherApiResponse["hourly"].size();
+    if (availableHours == 0) {
+        memset(buffer, 0, sizeof(buffer));
+        snprintf(buffer, sizeof(buffer), "%s", "Error: API responding with ZERO forecast data.");
+        EPD_ShowString(x, y, buffer, FONT_SIZE_16, BLACK, true);
+        return;
+    }
+
+    int forecastsToShow = min(length, (uint16_t)availableHours);
+    float forecastTemp[forecastsToShow]; // it supporse to 48 hours forecast
+
+    for (uint16_t i = 0; i < forecastsToShow; i++) {
+      if (i >= availableHours) {
+        Serial.println("Index out of bounds for hourly forecast");
+        break;
+      }
+      JsonObject hourly = weatherApiResponse["hourly"][i];
+      forecastTemp[i] = hourly["temp"].as<float>();
+    }
+
+
+
+    for (uint16_t i = 2; i < forecastsToShow; i++) {
+
+        if (i >= availableHours) {
+            Serial.println("Index out of bounds for hourly forecast");
+            break;
+        }
+
+        JsonObject hourlyBefore = weatherApiResponse["hourly"][i-1];
+        JsonObject hourly = weatherApiResponse["hourly"][i];
+
+        float beforeTemp = hourlyBefore["temp"].as<float>();
+        float temp = hourly["temp"].as<float>();
+
+        // draw line for the graph
+
+
+        x = x + 10;
+    }
+
+  }
+
+  void UI_currentInfo(uint16_t base_x, uint16_t base_y) {
+
+    uint16_t x = base_x;
+    uint16_t y = base_y;
+    char buffer[STRING_BUFFER_SIZE];
+    // Pressure
+    memset(buffer, 0, sizeof(buffer));
+    snprintf(buffer, sizeof(buffer), "%s hPa", weatherInfo.pressure.c_str());
+    EPD_ShowString(x, y, buffer, FONT_SIZE_36, BLACK, false);
+
+    // Humidity
+    memset(buffer, 0, sizeof(buffer));
+    snprintf(buffer, sizeof(buffer), "%s %%", weatherInfo.humidity.c_str());
+    EPD_ShowString(x, y + 45, buffer, FONT_SIZE_36, BLACK, false);
+
+
+
+    for (uint16_t i = 1; i < 47; i++)
+    {
+      String icon = String((const char *)weatherApiResponse["hourly"][i]["weather"]["icon"]);
+      String icon_name = "icon_" + icon + "_sm";
+    }
+
+
+  }
+
 
   // =================================================================================================
   // @brief Display the weather forecast on the screen
@@ -346,7 +480,7 @@ private:
 
     memset(buffer, 0, sizeof(buffer));
     snprintf(buffer, sizeof(buffer), ".%s", weatherInfo.tempDecimalPart.c_str());
-    EPD_ShowString(732, yPos + 8, buffer, FONT_SIZE_16, BLACK, false);
+    EPD_ShowString(730, yPos + 8, buffer, FONT_SIZE_16, BLACK, false);
 
     memset(buffer, 0, sizeof(buffer));
     // if the UNITS is metric, the degree symbol is 'C'
@@ -362,33 +496,24 @@ private:
     EPD_drawImage(20, 40, icon_map[icon_name.c_str()]);
 
     memset(buffer, 0, sizeof(buffer));
-    snprintf(buffer, sizeof(buffer), "%s", JSON.stringify(weatherApiResponse["current"]["weather"][0]["description"]).substring(1, JSON.stringify(weatherApiResponse["current"]["weather"][0]["description"]).length() - 1).c_str());
+    snprintf(buffer, sizeof(buffer), "%s", weatherApiResponse["current"]["weather"][0]["description"].as<String>().c_str());
     EPD_ShowString(72, 240, buffer, FONT_SIZE_16, BLACK, false);
 
     // uvi > UVI_THRESHOLD
-    if (JSON.stringify(weatherApiResponse["current"]["uvi"]).toInt() > UVI_THRESHOLD){
+    if (weatherApiResponse["current"]["uvi"].as<float>() > UVI_THRESHOLD){
       memset(buffer, 0, sizeof(buffer));
-      snprintf(buffer, sizeof(buffer), "%s", JSON.stringify(weatherApiResponse["current"]["uvi"]));
+      snprintf(buffer, sizeof(buffer), "%.1f", weatherApiResponse["current"]["uvi"].as<float>());
       EPD_ShowString(72, 10, buffer, FONT_SIZE_16, BLACK, false);
       EPD_drawImage(0, 0, uv_sm);
     }
-
-
-    // Pressure
-    memset(buffer, 0, sizeof(buffer));
-    snprintf(buffer, sizeof(buffer), "%s hPa", weatherInfo.pressure.c_str());
-    EPD_ShowString(330, 32, buffer, FONT_SIZE_36, BLACK, false);
-
-    // Humidity
-    memset(buffer, 0, sizeof(buffer));
-    snprintf(buffer, sizeof(buffer), "%s %%", weatherInfo.humidity.c_str());
-    EPD_ShowString(330, 72, buffer, FONT_SIZE_36, BLACK, false);
-
 
     // Date in formet of "Jan 01, Fri"
     memset(buffer, 0, sizeof(buffer));
     snprintf(buffer, sizeof(buffer), "%s ", convertUnixTimeToDisplayFormat(weatherInfo.currentDateTime).c_str());
     EPD_ShowStringRightAligned(790, 20, buffer, FONT_SIZE_36, BLACK);
+
+
+    UI_currentInfo(280, 20);
 
     UI_weather_future_forecast(260, 160, 5);
 
