@@ -8,7 +8,7 @@
 #include <esp_sleep.h>
 
 #define BAUD_RATE 115200
-#define HTTP_NOT_REQUESTED_YET 999
+#define HTTP_NOT_REQUESTED_YET -999
 #define STRING_BUFFER_SIZE 256
 
 class WeatherCrow
@@ -205,7 +205,7 @@ private:
     char buffer[STRING_BUFFER_SIZE];
 
     // icon
-    EPD_drawImage(20, 10, leo_face_lg);
+    EPD_drawImage(30, 20, leo_face_lg);
     EPD_DrawLine(baseXpos, 110, 740, 110, BLACK);
 
     // title
@@ -242,7 +242,7 @@ private:
 
       jsonBuffer = httpsGETRequest(apiEndPoint.c_str());
 
-      while (httpResponseCode == HTTP_NOT_REQUESTED_YET)
+      while (httpResponseCode < 0) // when the response is negative, it means in progress.
       {
         delay(100);
       }
@@ -317,10 +317,10 @@ private:
       snprintf(buffer, sizeof(buffer), "%s", forecastTime.c_str());
       EPD_ShowString(x + 14, y + 64, buffer, FONT_SIZE_16, BLACK, true);
 
-      EPD_DrawLine(x + 90, y - 32, x + 90, y + 42, BLACK);
+      //EPD_DrawLine(x + 90, y - 32, x + 90, y + 42, BLACK);
 
       // offset for the next icon
-      x = x + 110;
+      x = x + 105;
     }
   }
 
@@ -357,13 +357,12 @@ private:
     }
     EPD_ShowString(750, yPos, buffer, FONT_SIZE_36, BLACK);
 
-
     // Main weather icon
     String icon_name = "icon_" + weatherInfo.icon + "_lg";
     EPD_drawImage(20, 40, icon_map[icon_name.c_str()]);
 
     memset(buffer, 0, sizeof(buffer));
-    snprintf(buffer, sizeof(buffer), "%s", JSON.stringify(weatherApiResponse["current"]["weather"][0]["description"]).c_str());
+    snprintf(buffer, sizeof(buffer), "%s", JSON.stringify(weatherApiResponse["current"]["weather"][0]["description"]).substring(1, JSON.stringify(weatherApiResponse["current"]["weather"][0]["description"]).length() - 1).c_str());
     EPD_ShowString(72, 240, buffer, FONT_SIZE_16, BLACK, false);
 
     // uvi > UVI_THRESHOLD
@@ -374,13 +373,17 @@ private:
       EPD_drawImage(0, 0, uv_sm);
     }
 
-    /*
-    // Air pressure
-    EPD_drawImage(260, 0, wi_barometer_sm);
+
+    // Pressure
     memset(buffer, 0, sizeof(buffer));
     snprintf(buffer, sizeof(buffer), "%s hPa", weatherInfo.pressure.c_str());
-    EPD_ShowString(330, 32, buffer, FONT_SIZE_16, BLACK, false);
-    */
+    EPD_ShowString(330, 32, buffer, FONT_SIZE_36, BLACK, false);
+
+    // Humidity
+    memset(buffer, 0, sizeof(buffer));
+    snprintf(buffer, sizeof(buffer), "%s %%", weatherInfo.humidity.c_str());
+    EPD_ShowString(330, 72, buffer, FONT_SIZE_36, BLACK, false);
+
 
     // Date in formet of "Jan 01, Fri"
     memset(buffer, 0, sizeof(buffer));
@@ -420,7 +423,7 @@ public:
     EPD_GPIOInit();
   }
 
-  void run()
+  bool run()
   {
     try
     {
@@ -434,10 +437,12 @@ public:
         memset(msg, 0, sizeof(msg));
         strncpy(msg, errorMessageBuffer.c_str(), sizeof(msg) - 1);
         UI_error_message(title, msg);
+        return false;
       }
       else
       {
         UI_weather_forecast();
+        return true;
       }
     }
     catch (const std::exception &e)
@@ -445,6 +450,8 @@ public:
       errorMessageBuffer = String("Exception: ") + e.what();
       UI_error();
     }
+    // never reach here
+    return false;
   }
 };
 
@@ -457,7 +464,15 @@ void setup()
 
 void loop()
 {
-  weatherCrow.run();
-  esp_sleep_enable_timer_wakeup(1000000ULL * 60ULL * REFRESH_MINUITES);
-  esp_deep_sleep_start();
+  if(weatherCrow.run() == true){
+    // success wait for the next refresh
+    esp_sleep_enable_timer_wakeup(1000000ULL * 60ULL * REFRESH_MINUITES);
+    esp_deep_sleep_start();
+  }
+  else{
+    // refresh failed, wait for 5 minutes and try again.
+    esp_sleep_enable_timer_wakeup(1000000ULL * 60ULL * 5);
+    esp_deep_sleep_start();
+  }
+
 }

@@ -368,13 +368,6 @@ void EPD_ShowString(uint16_t x, uint16_t y, const char *chr, FontSize fontSetSiz
         return;
     }
 
-    Serial.print("show string x:");
-    Serial.print(x);
-    Serial.print(" y:");
-    Serial.print(y);
-    Serial.print(" text:");
-    Serial.println(chr);
-
     uint16_t x_pos = x;
     while (*chr != '\0')
     {

@@ -19,3 +19,6 @@
 
 // location name
 #define LOCATION_NAME "Toronto"
+
+// Warning for the high UV index
+#define UVI_THRESHOLD 3
