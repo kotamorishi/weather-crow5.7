@@ -1,6 +1,7 @@
 # Tools for this project
 
-When you are working on this project, you may need some tools to help you. Here are some tools that I made:
+When you are working on this project, you may want to use your graphics or fonts.
+Here are some tools that I made:
 
 ## SVG image to BMP image converter
 This tool converts SVG vector data to BMP header file.
@@ -61,3 +62,6 @@ python ttfToEPD.py ../fonts/8bit_wonder/8-BIT\ WONDER.TTF ../weatherCrow5.7/font
 python ttfToEPD.py ../fonts/rotorcap_neue12/ROTORcapNeue-Regular.ttf ../weatherCrow5.7/font12.cpp 12
 python ttfToEPD.py ../fonts/rotorcap_neue12/ROTORcapNeue-Bold.ttf ../weatherCrow5.7/font24.cpp 24
 ```
+
+Note : These tools are not perfect, but it works for me.
+If you have any issue, pull requests are very welcome.
