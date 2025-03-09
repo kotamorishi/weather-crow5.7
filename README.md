@@ -36,3 +36,7 @@ It is a weather station that displays the current weather and forecast for the n
 
 I will update here...hopefully soon.
 
+
+# Note
+While the code using JSONVar which is a JSON library to parse weather data.
+if you have any issue with the JSONVar library, you can use the ArduinoJson library instead.
