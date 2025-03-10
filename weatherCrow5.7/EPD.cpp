@@ -5,6 +5,26 @@
 PAINT Paint;
 
 /*******************************************************************
+    Function Description: Get font by font size (Internal helper function)
+    Interface Description: fontSetSize   Font size enum value
+    Return Value: Pointer to the corresponding FontSet, or nullptr if not found
+*******************************************************************/
+static const FontSet* getFontBySize(FontSize fontSetSize) {
+    switch (fontSetSize) {
+    case FONT_SIZE_8:
+        return &font_8;
+    case FONT_SIZE_16:
+        return &font_16;
+    case FONT_SIZE_36:
+        return &font_36;
+    case FONT_SIZE_48:
+        return &font_48;
+    default:
+        return nullptr;  // Return null for invalid font sizes
+    }
+}
+
+/*******************************************************************
     Function Description: Create image buffer array
     Interface Description: *image  The image array to be passed in
                            Width  Image width
@@ -265,26 +285,7 @@ void EPD_DrawCircle(uint16_t X_Center, uint16_t Y_Center, uint16_t Radius, uint1
 *******************************************************************/
 void EPD_ShowChar(uint16_t x, uint16_t y, uint16_t chr, FontSize font_size, uint16_t color)
 {
-    const FontSet *font;
-
-    switch (font_size)
-    {
-    case FONT_SIZE_8:
-        font = &font_8;
-        break;
-    case FONT_SIZE_16:
-        font = &font_16;
-        break;
-    // case FONT_SIZE_24:
-    //     font = &font_24;
-    //     break;
-    case FONT_SIZE_36:
-        font = &font_36;
-        break;
-    default:
-        Serial.println("ERROR : Font size not supported!! You can add more fonts with ttfToEPD tool.");
-        return;
-    }
+    const FontSet *font = getFontBySize(font_size);
 
     if (!font || !font->chars)
     {
@@ -350,21 +351,8 @@ void EPD_ShowChar(uint16_t x, uint16_t y, uint16_t chr, FontSize font_size, uint
 *******************************************************************/
 void EPD_ShowString(uint16_t x, uint16_t y, const char *chr, FontSize fontSetSize, uint16_t color, bool disableLineBreak)
 {
-    const FontSet *font;
-
-    switch (fontSetSize)
-    {
-    case FONT_SIZE_8:
-        font = &font_8;
-        break;
-    case FONT_SIZE_16:
-        font = &font_16;
-        break;
-    // case FONT_SIZE_24: font = &font_24; break;
-    case FONT_SIZE_36:
-        font = &font_36;
-        break;
-    default:
+    const FontSet *font = getFontBySize(fontSetSize);
+    if (!font) {
         return;
     }
 
@@ -429,20 +417,8 @@ void EPD_ShowString(uint16_t x, uint16_t y, const char *chr, FontSize fontSetSiz
 *******************************************************************/
 void EPD_ShowStringRightAligned(uint16_t right_x, uint16_t y, const char *chr, FontSize font_size, uint16_t color)
 {
-    const FontSet *font;
-
-    switch (font_size)
-    {
-    case FONT_SIZE_8:
-        font = &font_8;
-        break;
-    case FONT_SIZE_16:
-        font = &font_16;
-        break;
-    case FONT_SIZE_36:
-        font = &font_36;
-        break;
-    default:
+    const FontSet *font = getFontBySize(font_size);
+    if (!font) {
         return;
     }
 
