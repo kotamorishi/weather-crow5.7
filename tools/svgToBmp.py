@@ -3,27 +3,63 @@ import cairosvg
 from PIL import Image
 from io import BytesIO
 from collections import defaultdict
+import json
+import argparse
 
-# Define target output image widths
-imageSize = [
-    # (32,'xs'),
+# Define default image sizes for fallback
+DEFAULT_IMAGE_SIZES = [
     (64,'sm'),
     (128,'md'),
     (200,'lg')
 ]
 
-# this scripte will genraate a temporary PNG file which is totall unnessary. just I want to see the output of the image.
+# Default config file path
+CONFIG_FILE_PATH = os.path.join(os.path.dirname(__file__), "svgToBmp_config.json")
+
+def load_or_create_config():
+    """Load config from file or create default config file if not exists"""
+    if os.path.exists(CONFIG_FILE_PATH):
+        try:
+            with open(CONFIG_FILE_PATH, 'r') as f:
+                config = json.load(f)
+                print(f"Loaded configuration from {CONFIG_FILE_PATH}")
+                return config
+        except json.JSONDecodeError:
+            print(f"Error parsing config file {CONFIG_FILE_PATH}. Using defaults.")
+
+    # Create default config with new structure
+    default_config = {
+        "categories": [
+            {
+                "category": "weather",
+                "sizes": [
+                    {"width": 64, "label": "sm"},
+                    {"width": 128, "label": "md"},
+                    {"width": 200, "label": "lg"}
+                ]
+            }
+        ],
+        "threshold": 100
+    }
+
+    # Save default config
+    with open(CONFIG_FILE_PATH, 'w') as f:
+        json.dump(default_config, f, indent=2)
+        print(f"Created default configuration file at {CONFIG_FILE_PATH}")
+
+    return default_config
 
 class SvgToBmpConverter:
-    def __init__(self, width=128, threshold=128):
-        self.width = width
+    def __init__(self, threshold=128, config=None):
         self.threshold = threshold
-        # Calculate max_bytes based on width: (width * width / 8) + 4 bytes for header
-        self.max_bytes = ((width * width) // 8) + 4
         self.svg_dir = os.path.join(os.path.dirname(__file__), "../svg")
         self.output_file = os.path.join(os.path.dirname(__file__), "weatherIcons.h")
         self.category_base_sizes = {}  # Store base sizes for each category
         self.generated_icons = []  # Track all generated icon names
+
+        # Initialize from config if provided
+        self.config = config or {}
+        self.category_configs = {cfg["category"]: cfg for cfg in self.config.get("categories", [])}
 
     def scan_svg_files(self):
         """Scan SVG files and determine base aspect ratios for each category"""
@@ -34,6 +70,11 @@ class SvgToBmpConverter:
         for root, dirs, files in os.walk(self.svg_dir):
             category = os.path.basename(root)
             if category == os.path.basename(self.svg_dir):
+                continue
+
+            # Skip categories not in config
+            if category not in self.category_configs:
+                print(f"Skipping category '{category}' - not in configuration")
                 continue
 
             for file in files:
@@ -55,9 +96,10 @@ class SvgToBmpConverter:
 
         # Calculate base proportions for each category
         for category, dimensions in category_dimensions.items():
-            avg_aspect = sum(d[2] for d in dimensions) / len(dimensions)
-            self.category_base_sizes[category] = avg_aspect
-            print(f"Category {category} base aspect ratio: {avg_aspect:.2f}")
+            if dimensions:  # Check if dimensions list is not empty
+                avg_aspect = sum(d[2] for d in dimensions) / len(dimensions)
+                self.category_base_sizes[category] = avg_aspect
+                print(f"Category {category} base aspect ratio: {avg_aspect:.2f}")
 
         return category_files
 
@@ -155,17 +197,29 @@ class SvgToBmpConverter:
         return bit_array
 
     def generate_header_content(self):
-        """Generate header content for all sizes and categories"""
+        """Generate header content for categories and their specified sizes"""
         content = []
         self.generated_icons = []  # Reset the icon list
         category_files = self.scan_svg_files()
 
-        for size_tuple in sorted(imageSize):  # size_tuple is now (width, label)
-            size, label = size_tuple  # Unpack the tuple
-            content.append(f"\n// === Size variant: {size}px ({label}) ===")
-            for category, files in category_files.items():
+        # Process each category with its own size configuration
+        for category, files in category_files.items():
+            category_config = self.category_configs.get(category, {})
+            sizes = category_config.get("sizes", [])
+
+            # Skip empty categories or those without size configs
+            if not files or not sizes:
+                continue
+
+            content.append(f"\n// === Category: {category} ===")
+
+            # Process each size for this category
+            for size_config in sizes:
+                size = size_config.get("width", 128)
+                label = size_config.get("label", "md")
+
                 target_width, target_height = self.get_category_size(category, size)
-                content.append(f"\n// Category: {category} ({target_width}x{target_height})")
+                content.append(f"\n// Size variant: {size}px ({label}) - {target_width}x{target_height}")
 
                 for file_path in files:
                     print(f"Processing {file_path} at {target_width}x{target_height}")
@@ -251,9 +305,34 @@ class SvgToBmpConverter:
             out.write(f"#endif /* {guard_name} */\n")
 
 
+def parse_arguments():
+    """Parse command line arguments"""
+    parser = argparse.ArgumentParser(description='Convert SVG files to BMP arrays in C++ header format.')
+    parser.add_argument('--config', type=str, default=CONFIG_FILE_PATH,
+                        help=f'Path to config file (default: {CONFIG_FILE_PATH})')
+    return parser.parse_args()
+
 if __name__ == "__main__":
-    converter = SvgToBmpConverter(width=128, threshold=100)
+    args = parse_arguments()
+
+    # Load or create config file
+    config = load_or_create_config()
+
+    # Show configuration summary
+    print(f"Using configuration:")
+    print(f"- Threshold: {config.get('threshold', 100)}")
+    print(f"- Categories:")
+    for category_cfg in config.get("categories", []):
+        cat_name = category_cfg.get("category", "unknown")
+        sizes_info = [f"{s.get('width', 'unknown')}px ({s.get('label', 'unknown')})"
+                      for s in category_cfg.get("sizes", [])]
+        print(f"  - {cat_name}: {', '.join(sizes_info)}")
+
+    converter = SvgToBmpConverter(
+        threshold=config.get("threshold", 100),
+        config=config
+    )
     content = converter.generate_header_content()
     icon_map = converter.generate_icon_map()
     SvgToBmpConverter.generate_header_file(content, icon_map)
-    print("\nGenerated weatherIcons.h with all size variants and icon map")
+    print("\nGenerated weatherIcons.h with category-specific size configurations")
