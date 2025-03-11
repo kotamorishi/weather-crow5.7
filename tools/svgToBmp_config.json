@@ -1,0 +1,29 @@
+{
+  "categories": [
+    {
+      "category": "weatherConditions",
+      "sizes": [
+        { "width": 72, "label": "sm" },
+        { "width": 240, "label": "lg" }
+      ]
+    },
+    {
+      "category": "sm",
+      "sizes": [{ "width": 32, "label": "sm" }]
+    },
+    {
+      "category": "md",
+      "sizes": [{ "width": 64, "label": "md" }]
+    },
+    {
+      "category": "lg",
+      "sizes": [{ "width": 220, "label": "lg" }]
+    },
+    {
+        "category": "info",
+        "sizes": [{ "width": 36, "label": "sm" }]
+      }
+  ],
+  "threshold": 100,
+  "commnet": "be careful with the width, it consume a lot of program memory"
+}

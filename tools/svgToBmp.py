@@ -53,7 +53,7 @@ class SvgToBmpConverter:
     def __init__(self, threshold=128, config=None):
         self.threshold = threshold
         self.svg_dir = os.path.join(os.path.dirname(__file__), "../svg")
-        self.output_file = os.path.join(os.path.dirname(__file__), "weatherIcons.h")
+        self.output_file = os.path.join(os.path.dirname(__file__), "../weatherCrow5.7/weatherIcons.h")
         self.category_base_sizes = {}  # Store base sizes for each category
         self.generated_icons = []  # Track all generated icon names
 
@@ -227,7 +227,8 @@ class SvgToBmpConverter:
                     # Get actual dimensions of generated image
                     with Image.open("tmp.png") as img:
                         actual_width, actual_height = img.size
-                        print(f"  Actual size: {actual_width}x{actual_height} pixels")
+                        print(f"  Actual size: {actual_width}x{actual_height} pixels, scale " +
+                              f"{actual_width/target_width:.2f}x{actual_height/target_height:.2f}")
 
                     arr = self.image_to_bmp_array("tmp.png", debug=False)
                     base_name = os.path.splitext(os.path.basename(file_path))[0].replace('-', '_')
@@ -271,11 +272,18 @@ class SvgToBmpConverter:
         map_content.append("};")
         return "\n".join(map_content)
 
-    @staticmethod
-    def generate_header_file(all_content, icon_map_content):
+    def convert_and_save(self):
+        """Convert SVGs and save to the configured output file"""
+        content = self.generate_header_content()
+        icon_map = self.generate_icon_map()
+        self.generate_header_file(content, icon_map, self.output_file)
+        print(f"\nGenerated header file at: {self.output_file}")
+
+    def generate_header_file(self, all_content, icon_map_content, output_path):
         """Write complete header file with all sizes and icon map"""
-        output_file = os.path.join(os.path.dirname(__file__), "weatherIcons.h")
-        with open(output_file, "w") as out:
+        # Changed from static method to instance method
+        # Use the provided output path parameter
+        with open(output_path, "w") as out:
             guard_name = "WEATHER_ICONS_H"
             out.write("// weatherIcons.h\n")
             out.write(f"#ifndef {guard_name}\n")
@@ -287,7 +295,7 @@ class SvgToBmpConverter:
             out.write("#endif\n\n")
 
             out.write("// Structure of the image\n")
-            out.write("//  uint16_t width; // firtst byte is width\n")
+            out.write("//  uint16_t width; // first byte is width\n")
             out.write("//  uint16_t height; // second byte is height\n")
             out.write("//  const unsigned char *data; vary\n")
             out.write("//};\n\n")
@@ -332,7 +340,5 @@ if __name__ == "__main__":
         threshold=config.get("threshold", 100),
         config=config
     )
-    content = converter.generate_header_content()
-    icon_map = converter.generate_icon_map()
-    SvgToBmpConverter.generate_header_file(content, icon_map)
+    converter.convert_and_save()
     print("\nGenerated weatherIcons.h with category-specific size configurations")
