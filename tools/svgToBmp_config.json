@@ -3,8 +3,8 @@
     {
       "category": "weatherConditions",
       "sizes": [
-        { "width": 72, "label": "sm" },
-        { "width": 240, "label": "lg" }
+        { "width": 72, "label": "sm", "scale":0.6},
+        { "width": 240, "label": "lg", "scale":0.25}
       ]
     },
     {

@@ -62,10 +62,11 @@ class SvgToBmpConverter:
         self.category_configs = {cfg["category"]: cfg for cfg in self.config.get("categories", [])}
 
     def scan_svg_files(self):
-        """Scan SVG files and determine base aspect ratios for each category"""
+        """Two-pass scan: first determine category dimensions, then scale consistently"""
         category_files = defaultdict(list)
         category_dimensions = defaultdict(list)
 
+        print("\n=== First pass: Analyzing category dimensions ===")
         # First pass: collect files and analyze dimensions
         for root, dirs, files in os.walk(self.svg_dir):
             category = os.path.basename(root)
@@ -92,35 +93,86 @@ class SvgToBmpConverter:
                             orig_width = bbox[2] - bbox[0]
                             orig_height = bbox[3] - bbox[1]
                             aspect = orig_height / orig_width
-                            category_dimensions[category].append((orig_width, orig_height, aspect))
+                            file_name = os.path.basename(full_path)
+                            print(f"  {category}/{file_name}: {orig_width}x{orig_height}, aspect: {aspect:.2f}")
+                            category_dimensions[category].append({
+                                'file': file_name,
+                                'width': orig_width,
+                                'height': orig_height,
+                                'aspect': aspect
+                            })
 
-        # Calculate base proportions for each category
+        # Calculate category metrics
+        print("\n=== Category scaling analysis ===")
         for category, dimensions in category_dimensions.items():
-            if dimensions:  # Check if dimensions list is not empty
-                avg_aspect = sum(d[2] for d in dimensions) / len(dimensions)
-                self.category_base_sizes[category] = avg_aspect
-                print(f"Category {category} base aspect ratio: {avg_aspect:.2f}")
+            if dimensions:
+                # Calculate average and max dimensions
+                avg_width = sum(d['width'] for d in dimensions) / len(dimensions)
+                avg_height = sum(d['height'] for d in dimensions) / len(dimensions)
+                avg_aspect = sum(d['aspect'] for d in dimensions) / len(dimensions)
+                max_width = max(d['width'] for d in dimensions)
+                max_height = max(d['height'] for d in dimensions)
+
+                # Store category metrics
+                self.category_base_sizes[category] = {
+                    'avg_aspect': avg_aspect,
+                    'avg_width': avg_width,
+                    'avg_height': avg_height,
+                    'max_width': max_width,
+                    'max_height': max_height,
+                    'files': len(dimensions)
+                }
+
+                # Print category summary
+                print(f"Category '{category}' ({len(dimensions)} files):")
+                print(f"  Average dimensions: {avg_width:.1f}x{avg_height:.1f} px")
+                print(f"  Max dimensions: {max_width}x{max_height} px")
+                print(f"  Average aspect ratio: {avg_aspect:.2f}")
+
+                # Find outliers for warning
+                aspect_threshold = 0.2  # 20% deviation threshold
+                outliers = [d for d in dimensions if
+                           abs(d['aspect'] - avg_aspect) / avg_aspect > aspect_threshold]
+                if outliers:
+                    print(f"  Warning: {len(outliers)} files have significantly different aspect ratios:")
+                    for o in outliers[:3]:  # Show first 3 outliers
+                        print(f"    {o['file']}: aspect {o['aspect']:.2f} " +
+                             f"(differs by {abs(o['aspect'] - avg_aspect) / avg_aspect * 100:.1f}%)")
+                    if len(outliers) > 3:
+                        print(f"    ... and {len(outliers) - 3} more")
 
         return category_files
 
     def get_category_size(self, category, target_width):
         """Calculate category-specific dimensions for given target width"""
-        aspect = self.category_base_sizes[category]
+        if category not in self.category_base_sizes:
+            print(f"Warning: No metrics for category '{category}'. Using default aspect ratio.")
+            aspect = 1.0
+        else:
+            metrics = self.category_base_sizes[category]
+            aspect = metrics['avg_aspect']
+            print(f"Using category '{category}' aspect ratio: {aspect:.2f}")
+
         if aspect > 1:  # Taller than wide
             width = int(target_width / aspect)
             height = target_width
-        else:  # Wider than tall
+        else:  # Wider than tall or square
             width = target_width
             height = int(target_width * aspect)
 
         # Round to nearest multiple of 8
         width = ((width + 7) // 8) * 8
         height = ((height + 7) // 8) * 8
+
+        print(f"Target dimensions for category '{category}': {width}x{height} px")
         return width, height
 
-    def convert_svg_to_png(self, svg_path, output_filename, target_width, target_height):
-        """Modified to use target width and height"""
+    def convert_svg_to_png(self, svg_path, output_filename, target_width, target_height, custom_scale=None):
+        """Modified to support custom scaling factor from config"""
+        category = os.path.basename(os.path.dirname(svg_path))
         buffer = BytesIO()
+
+        # Use high resolution for initial rendering
         cairosvg.svg2png(url=svg_path, output_width=target_width*4, write_to=buffer)
         buffer.seek(0)
 
@@ -130,25 +182,45 @@ class SvgToBmpConverter:
             if bbox:
                 cropped = original.crop(bbox)
 
-                # Scale to target size while maintaining aspect ratio within bounds
-                crop_width, crop_height = cropped.size
-                scale_width = target_width / crop_width
-                scale_height = target_height / crop_height
-                scale = min(scale_width, scale_height)
+                # If custom scale is provided in the config, use it directly
+                if custom_scale is not None:
+                    category_scale = custom_scale
+                    print(f"Using custom scale: {category_scale} for {os.path.basename(svg_path)}")
+                else:
+                    # Otherwise use the category-based scaling calculation
+                    if category in self.category_base_sizes:
+                        metrics = self.category_base_sizes[category]
+                        # Use the category's average dimensions as reference
+                        ref_width = metrics['avg_width']
+                        ref_height = metrics['avg_height']
 
-                new_width = target_width
-                new_height = target_height
+                        # Calculate a consistent scaling factor based on category's average dimensions
+                        if metrics['avg_aspect'] > 1:  # Taller than wide
+                            category_scale = target_height / ref_height
+                        else:  # Wider than tall or square
+                            category_scale = target_width / ref_width
+                    else:
+                        # Fallback if no category metrics
+                        print(f"Warning: No metrics for category '{category}'. Using default scaling.")
+                        ref_width = cropped.width
+                        ref_height = cropped.height
+                        category_scale = min(target_width / ref_width, target_height / ref_height)
 
-                # Resize with padding to maintain aspect ratio
-                intermediate = cropped.resize(
-                    (int(crop_width * scale), int(crop_height * scale)),
+                # Apply the scaling to this image
+                new_width = int(cropped.width * category_scale)
+                new_height = int(cropped.height * category_scale)
+
+                # Resize with the consistent category scale factor
+                scaled = cropped.resize(
+                    (new_width, new_height),
                     Image.Resampling.LANCZOS
                 )
 
-                final = Image.new('RGBA', (new_width, new_height), (255, 255, 255, 0))
-                paste_x = (new_width - intermediate.width) // 2
-                paste_y = 0  # Align to top
-                final.paste(intermediate, (paste_x, paste_y), intermediate)
+                # Center the scaled image on the target canvas
+                final = Image.new('RGBA', (target_width, target_height), (255, 255, 255, 0))
+                paste_x = (target_width - new_width) // 2
+                paste_y = (target_height - new_height) // 2
+                final.paste(scaled, (paste_x, paste_y), scaled)
                 final.save(output_filename, format="PNG")
 
     def image_to_bmp_array(self, png_path, debug=False):
@@ -217,18 +289,21 @@ class SvgToBmpConverter:
             for size_config in sizes:
                 size = size_config.get("width", 128)
                 label = size_config.get("label", "md")
+                custom_scale = size_config.get("scale", None)  # Get custom scale if provided
+
+                if custom_scale is not None:
+                    print(f"Using custom scale factor: {custom_scale} for {category}/{label}")
 
                 target_width, target_height = self.get_category_size(category, size)
                 content.append(f"\n// Size variant: {size}px ({label}) - {target_width}x{target_height}")
 
                 for file_path in files:
                     print(f"Processing {file_path} at {target_width}x{target_height}")
-                    self.convert_svg_to_png(file_path, "tmp.png", target_width, target_height)
+                    # Pass the custom_scale to the convert function
+                    self.convert_svg_to_png(file_path, "tmp.png", target_width, target_height, custom_scale)
                     # Get actual dimensions of generated image
                     with Image.open("tmp.png") as img:
                         actual_width, actual_height = img.size
-                        print(f"  Actual size: {actual_width}x{actual_height} pixels, scale " +
-                              f"{actual_width/target_width:.2f}x{actual_height/target_height:.2f}")
 
                     arr = self.image_to_bmp_array("tmp.png", debug=False)
                     base_name = os.path.splitext(os.path.basename(file_path))[0].replace('-', '_')
