@@ -28,11 +28,15 @@ typedef struct {
 extern const FontSet font_8;
 extern const FontSet font_16;
 extern const FontSet font_36;
+extern const FontSet font_38;
+extern const FontSet font_92;
 
 typedef enum {
     FONT_SIZE_8 = 8,
     FONT_SIZE_16 = 16,
-    FONT_SIZE_36 = 36
+    FONT_SIZE_36 = 36,
+    FONT_SIZE_38 = 38,
+    FONT_SIZE_92 = 92
 } FontSize;
 
 #endif // FONTS_H
