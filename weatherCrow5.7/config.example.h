@@ -14,6 +14,11 @@
 #define LATITUDE "20.4255911"
 #define LONGITUDE "136.0809294"
 
+// kyoto
+// #define LATITUDE "35.09"
+// #define LONGITUDE "135.55"
+
+
 // Refresh rate for the weather data in minuites (min:1)
 #define REFRESH_MINUITES 60
 
@@ -22,3 +27,6 @@
 
 // Warning for the high UV index
 #define UVI_THRESHOLD 3
+
+// Forecast hour interval (min:1 to max:8)
+#define HOUR_INTERVAL 3
