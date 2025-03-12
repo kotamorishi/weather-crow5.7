@@ -53,6 +53,10 @@ The weather data is fetched from the [OpenWeatherMap](https://openweathermap.org
   - [Weather Icons](https://erikflowers.github.io/weather-icons/)
   The Weather Icons project created and maintained by Erik Flowers. v1.0 artwork by Lukas Bischoff. v1.1 - 2.0 artwork by Erik Flowers
 
+- 8px font:
+Copyright (c) YUJI OSHIMOTO.
+  - [04b-03](http://www.04.jp.org/)
+
 - Poppins:
 This project uses the "Poppins" font, licensed under the SIL Open Font License, Version 1.1.
 Copyright (c) Indian Type Foundry.
