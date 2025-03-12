@@ -17,8 +17,10 @@ static const FontSet* getFontBySize(FontSize fontSetSize) {
         return &font_16;
     case FONT_SIZE_36:
         return &font_36;
-    case FONT_SIZE_48:
-        return &font_48;
+    case FONT_SIZE_38:
+        return &font_38;
+    case FONT_SIZE_92:
+        return &font_92;
     default:
         return nullptr;  // Return null for invalid font sizes
     }
@@ -147,6 +149,10 @@ void Paint_SetPixel(uint16_t Xpoint, uint16_t Ypoint, uint16_t Color)
 *******************************************************************/
 void EPD_DrawLine(uint16_t Xstart, uint16_t Ystart, uint16_t Xend, uint16_t Yend, uint16_t Color)
 {
+    if (Xstart >= Paint.widthMemory || Ystart >= Paint.heightMemory ||
+        Xend >= Paint.widthMemory || Yend >= Paint.heightMemory) {
+        return;
+    }
     uint16_t Xpoint, Ypoint;
     int dx, dy;
     int XAddway, YAddway;
@@ -332,7 +338,19 @@ void EPD_ShowChar(uint16_t x, uint16_t y, uint16_t chr, FontSize font_size, uint
                     break;
                 if (current_y >= Paint.heightMemory)
                     break;
-                Paint_SetPixel(current_x++, current_y, (byte & (0x80 >> bit)) ? color : !color);
+                // Draw pixel based on bit value
+                if ((byte & (0x80 >> bit)) != 0)
+                {
+                    Paint_SetPixel(current_x, current_y, color);
+                }
+                // if you need to fill out the character with the white background
+                // else
+                // {
+                //     Paint_SetPixel(current_x, current_y, !color);
+                // }
+                current_x++;
+
+
             }
         }
         current_y++;
@@ -451,6 +469,60 @@ void EPD_ShowStringRightAligned(uint16_t right_x, uint16_t y, const char *chr, F
 
     // Calculate starting position from right edge
     uint16_t start_x = (right_x > total_width) ? (right_x - total_width) : 0;
+
+    // Display the string starting from calculated position
+    EPD_ShowString(start_x, y, chr, font_size, color, true);
+}
+
+/*******************************************************************
+    Function Description: Display a string with center alignment
+    Interface Description:
+        center_x  Center x-coordinate for the string
+        y         String y-coordinate parameter
+        chr       String to be displayed (null-terminated)
+        font_size Font height (e.g., 8, 16, 36)
+        color     Pixel color parameter
+    Return Value: None
+*******************************************************************/
+void EPD_ShowStringCenterAligned(uint16_t center_x, uint16_t y, const char *chr, FontSize font_size, uint16_t color)
+{
+    const FontSet *font = getFontBySize(font_size);
+    if (!font) {
+        return;
+    }
+
+    // Calculate total width of the string
+    uint16_t total_width = 0;
+    const char *temp_chr = chr;
+    while (*temp_chr != '\0')
+    {
+        if (*temp_chr == ' ')
+        {
+            // Space character width is half of the font height
+            uint16_t space_width = font->height / 2;
+            if (space_width > MAX_SPACE_WIDTH)
+            {
+                space_width = MAX_SPACE_WIDTH;
+            }
+            total_width += space_width;
+        }
+        else
+        {
+            uint16_t chr_index = *temp_chr - font->char_start;
+            if (chr_index < font->char_count)
+            {
+                const FontChar *current_char = font->chars[chr_index];
+                total_width += current_char->width + (current_char->horizontal_offset * 2) + font->space_width;
+            }
+        }
+        temp_chr++;
+    }
+
+    // Calculate starting position from center
+    uint16_t start_x = 0;
+    if (center_x >= total_width / 2) {
+        start_x = center_x - (total_width / 2);
+    }
 
     // Display the string starting from calculated position
     EPD_ShowString(start_x, y, chr, font_size, color, true);
