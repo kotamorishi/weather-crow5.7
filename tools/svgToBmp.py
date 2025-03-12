@@ -1,10 +1,11 @@
 import os
 import cairosvg
-from PIL import Image
+from PIL import Image, ImageDraw, ImageFont
 from io import BytesIO
 from collections import defaultdict
 import json
 import argparse
+import math
 
 # Define default image sizes for fallback
 DEFAULT_IMAGE_SIZES = [
@@ -305,11 +306,17 @@ class SvgToBmpConverter:
                     with Image.open("tmp.png") as img:
                         actual_width, actual_height = img.size
 
+                    # Get the original filename without extension
+                    base_name_original = os.path.splitext(os.path.basename(file_path))[0]
+                    # Get the C-compatible name (replace hyphens with underscores)
+                    base_name = base_name_original.replace('-', '_')
+
                     arr = self.image_to_bmp_array("tmp.png", debug=False)
-                    base_name = os.path.splitext(os.path.basename(file_path))[0].replace('-', '_')
                     array_name = f"{base_name}_{label}"  # Use label instead of width
                     icon_key = f"{base_name}_{label}"  # Create key for the icon map
-                    self.generated_icons.append((icon_key, array_name))  # Store for map generation
+
+                    # Store both the C array name and the original filename
+                    self.generated_icons.append((icon_key, array_name, base_name_original, category))
 
                     content.append(f"// {array_name}: {actual_width}x{actual_height} pixels")
                     content.append(f"const unsigned char {array_name}[] = {{")
@@ -337,7 +344,7 @@ class SvgToBmpConverter:
         map_content.append("std::map<std::string, const unsigned char*> icon_map = {")
 
         # Add each icon to the map with proper indentation
-        for icon_key, array_name in self.generated_icons:
+        for icon_key, array_name, orig_name, category in self.generated_icons:
             map_content.append(f"  {{\"{icon_key}\", {array_name}}},")
 
         # Remove trailing comma from the last entry if there are any entries
@@ -347,12 +354,240 @@ class SvgToBmpConverter:
         map_content.append("};")
         return "\n".join(map_content)
 
+    def generate_category_previews(self):
+        """Generate a single preview image showing all categories and sizes"""
+        print("\n=== Generating comprehensive preview image ===")
+
+        # Background color (blue #51709C)
+        bg_color = (81, 112, 156)
+        header_color = (45, 65, 95)  # Darker blue for section headers
+
+        # First scan and collect information about all categories
+        category_files_map = self.scan_svg_files()
+
+        print(f"Found {len(category_files_map)} categories with SVGs: {list(category_files_map.keys())}")
+
+        # Structure to hold all preview data
+        preview_sections = []
+
+        # Calculate total height and maximum width needed
+        total_height = 50  # Start with space for title
+        max_width = 800  # Minimum width
+        max_icons_per_row = 8  # Maximum icons per row for any section
+
+        # Get all categories from configuration
+        all_categories = list(self.category_configs.keys())
+        print(f"Configured categories: {all_categories}")
+
+        # Check if generated icons exist
+        if not self.generated_icons:
+            print("WARNING: No icons have been generated yet. Running header generation first.")
+            self.generate_header_content()  # Generate icons if not already done
+
+        print(f"Total generated icons: {len(self.generated_icons)}")
+        # Group icons by category and size label directly using the stored category
+        icons_by_category_size = {}
+        for icon_key, array_name, orig_name, category in self.generated_icons:
+            # Extract size label from icon_key
+            parts = icon_key.rsplit('_', 1)
+            if len(parts) == 2:
+                base_name, size_label = parts
+
+                # Use the stored category directly
+                key = (category, size_label)
+                if key not in icons_by_category_size:
+                    icons_by_category_size[key] = []
+
+                # Store the original name for display
+                icons_by_category_size[key].append((orig_name, icon_key, array_name))
+
+        # Print debug info about icons by category
+        print("\nIcons by category and size:")
+        for (cat, size_label), icons in icons_by_category_size.items():
+            print(f"  {cat}/{size_label}: {len(icons)} icons")
+            # Print first few icon names for debugging
+            for i, (orig_name, icon_key, array_name) in enumerate(icons[:3]):
+                print(f"    - {orig_name} -> {icon_key}")
+            if len(icons) > 3:
+                print(f"    - ... and {len(icons) - 3} more")
+
+        # Process all configured categories and their sizes
+        for category, config in self.category_configs.items():
+            # Get category files
+            category_files = category_files_map.get(category, [])
+            if not category_files:
+                print(f"No SVG files found for category '{category}', skipping")
+                continue
+
+            # Get configured sizes for this category
+            sizes = config.get("sizes", [])
+            if not sizes:
+                print(f"No size configurations for category '{category}', skipping")
+                continue
+
+            # Process each size
+            for size_config in sizes:
+                size = size_config.get("width", 128)
+                label = size_config.get("label", "md")
+
+                # Get the target dimensions
+                target_width, target_height = self.get_category_size(category, size)
+
+                # Get icons for this category and size
+                category_icons = icons_by_category_size.get((category, label), [])
+
+                if not category_icons:
+                    print(f"No icons found for {category}/{label}, skipping this section")
+                    continue
+
+                print(f"Adding section for {category}/{label} with {len(category_icons)} icons")
+
+                # Calculate grid dimensions
+                icon_count = len(category_icons)
+                grid_columns = min(max_icons_per_row, icon_count)
+                grid_rows = (icon_count + grid_columns - 1) // grid_columns
+
+                section_width = grid_columns * (target_width + 20)
+                section_height = grid_rows * (target_height + 60) + 60  # Space for section header
+
+                max_width = max(max_width, section_width + 40)  # Add margin
+
+                # Store section info for later rendering
+                preview_sections.append({
+                    'category': category,
+                    'size': size,
+                    'label': label,
+                    'target_width': target_width,
+                    'target_height': target_height,
+                    'icons': category_icons,
+                    'grid_columns': grid_columns,
+                    'grid_rows': grid_rows,
+                    'section_height': section_height,
+                    'y_offset': total_height
+                })
+
+                total_height += section_height + 20  # Add margin between sections
+
+        print(f"Created {len(preview_sections)} preview sections")
+
+        if not preview_sections:
+            print("No preview sections to render. Check your SVG files and configuration.")
+            return
+
+        # Create the single large preview canvas
+        preview = Image.new('RGB', (max_width, total_height + 50), bg_color)
+        draw = ImageDraw.Draw(preview)
+
+        # Add main title
+        try:
+            font_title = ImageFont.truetype("Arial", 30)
+            draw.text((20, 10), "Weather Icon Preview - All Categories and Sizes",
+                     fill="white", font=font_title)
+        except Exception as e:
+            print(f"Font error: {e}")
+            draw.text((20, 10), "Weather Icon Preview - All Categories and Sizes",
+                     fill="white")
+
+        # Render each section
+        for section in preview_sections:
+            # Draw section header background
+            draw.rectangle(
+                [(10, section['y_offset']),
+                 (max_width - 10, section['y_offset'] + 40)],
+                fill=header_color
+            )
+
+            # Draw section header text
+            try:
+                font_header = ImageFont.truetype("Arial", 24)
+                draw.text(
+                    (20, section['y_offset'] + 5),
+                    f"Category: {section['category']}, Size: {section['size']}px ({section['label']})",
+                    fill="white", font=font_header
+                )
+            except:
+                draw.text(
+                    (20, section['y_offset'] + 5),
+                    f"Category: {section['category']}, Size: {section['size']}px ({section['label']})",
+                    fill="white"
+                )
+
+            # Place each icon in this section
+            x, y = 20, section['y_offset'] + 50
+
+            # Get the custom scale for this specific size configuration
+            category_config = self.category_configs.get(section['category'], {})
+            sizes = category_config.get("sizes", [])
+            custom_scale = None
+            for size_cfg in sizes:
+                if size_cfg.get("label") == section['label']:
+                    custom_scale = size_cfg.get("scale")
+                    break
+
+            if custom_scale is not None:
+                print(f"Using custom scale {custom_scale} for {section['category']}/{section['label']}")
+
+            for i, (orig_name, icon_key, array_name) in enumerate(section['icons']):
+                # Use the original file name to find the SVG
+                svg_file = os.path.join(self.svg_dir, section['category'], f"{orig_name}.svg")
+
+                if os.path.exists(svg_file):
+                    # Generate the PNG temporarily
+                    temp_png = f"temp_{orig_name}_{section['label']}.png"
+                    self.convert_svg_to_png(
+                        svg_file, temp_png,
+                        section['target_width'], section['target_height'],
+                        custom_scale
+                    )
+
+                    # Open and paste the icon
+                    try:
+                        with Image.open(temp_png) as icon_img:
+                            # Draw a light border to see icon boundaries
+                            icon_with_border = Image.new('RGBA', icon_img.size, (255, 255, 255, 30))
+                            icon_with_border.paste(icon_img, (0, 0), icon_img.split()[3])
+                            preview.paste(icon_with_border, (x, y), icon_with_border.split()[3])
+
+                            # Add icon name below using the original filename
+                            try:
+                                font_sm = ImageFont.truetype("Arial", 12)
+                                draw.text((x, y + section['target_height'] + 5), orig_name,
+                                         fill="white", font=font_sm)
+                            except:
+                                draw.text((x, y + section['target_height'] + 5), orig_name,
+                                         fill="white")
+
+                            # Remove temp file
+                            os.remove(temp_png)
+                    except Exception as e:
+                        print(f"Error processing icon {orig_name}: {e}")
+                else:
+                    print(f"Warning: SVG file not found: {svg_file}")
+
+                # Move to next position
+                x += section['target_width'] + 20
+                if (i + 1) % section['grid_columns'] == 0:
+                    x = 20
+                    y += section['target_height'] + 60
+
+        # Save the comprehensive preview image
+        preview_dir = os.path.join(os.path.dirname(__file__), "previews")
+        os.makedirs(preview_dir, exist_ok=True)
+        preview_file = os.path.join(preview_dir, "weather_icons_complete_preview.png")
+        preview.save(preview_file)
+        print(f"Saved comprehensive preview image: {preview_file}")
+
     def convert_and_save(self):
         """Convert SVGs and save to the configured output file"""
         content = self.generate_header_content()
         icon_map = self.generate_icon_map()
         self.generate_header_file(content, icon_map, self.output_file)
+
+        # Generate preview images after header generation
+        self.generate_category_previews()
+
         print(f"\nGenerated header file at: {self.output_file}")
+        print(f"Preview images saved in {os.path.join(os.path.dirname(__file__), 'previews')} directory")
 
     def generate_header_file(self, all_content, icon_map_content, output_path):
         """Write complete header file with all sizes and icon map"""

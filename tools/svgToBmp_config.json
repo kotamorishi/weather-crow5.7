@@ -3,27 +3,26 @@
     {
       "category": "weatherConditions",
       "sizes": [
-        { "width": 72, "label": "sm", "scale":0.6},
-        { "width": 240, "label": "lg", "scale":0.25}
+        { "width": 72, "label": "sm", "scale":0.255},
+        { "width": 270, "label": "lg", "scale":0.255}
       ]
     },
     {
       "category": "sm",
-      "sizes": [{ "width": 32, "label": "sm" }]
+      "sizes": [{ "width": 32, "label": "sm", "scale":0.3}]
+    },
+    {
+      "category": "degree",
+      "sizes": [{ "width": 16, "label": "sm", "scale":1.85}]
     },
     {
       "category": "md",
-      "sizes": [{ "width": 64, "label": "md" }]
+      "sizes": [{ "width": 64, "label": "md" ,"scale":0.35}]
     },
     {
       "category": "lg",
-      "sizes": [{ "width": 220, "label": "lg" }]
-    },
-    {
-        "category": "info",
-        "sizes": [{ "width": 36, "label": "sm" }]
-      }
+      "sizes": [{ "width": 220, "label": "lg", "scale":0.25}]
+    }
   ],
-  "threshold": 100,
-  "commnet": "be careful with the width, it consume a lot of program memory"
+  "threshold": 100
 }
