@@ -36,6 +36,11 @@ All the fonts should include `fonts.h` which has the font data structure.
 Once you add the new font on your project, add the font data to the `fonts.h` file.
 add the font file under the `fonts` directory and run the script.
 
+Known issue:
+- The font size is not accurate.
+- The font kerning is not accurate.
+- Wide fonts are not rendered correctly, some parts are cut off.
+
 ```c
 typedef struct {
     uint8_t char_code;      // Character itself
