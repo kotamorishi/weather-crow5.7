@@ -305,6 +305,7 @@ private:
    */
   bool getWeatherInfo(uint8_t retryCount = 0)
   {
+    errorMessageBuffer = "getWeatherInfo() failed.";
     httpResponseCode = HTTP_NOT_REQUESTED_YET;
     if (WiFi.status() != WL_CONNECTED)
     {
@@ -388,9 +389,9 @@ private:
 
     // Vertical separator line
     uint16_t lineLength = 103;
-    EPD_DrawLine(x + 35, y + 70, x + 35, y + lineLength, BLACK);
-    EPD_DrawLine(x + 36, y + 70, x + 36, y + lineLength, BLACK);
-    EPD_DrawLine(x + 37, y + 70, x + 37, y + lineLength, BLACK);
+    EPD_DrawLine(x + 35, y + 75, x + 35, y + lineLength, BLACK);
+    EPD_DrawLine(x + 36, y + 75, x + 36, y + lineLength, BLACK);
+    EPD_DrawLine(x + 37, y + 75, x + 37, y + lineLength, BLACK);
 
     // Temperature
     memset(buffer, 0, sizeof(buffer));
