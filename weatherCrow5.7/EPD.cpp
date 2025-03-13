@@ -470,6 +470,12 @@ void EPD_ShowStringRightAligned(uint16_t right_x, uint16_t y, const char *chr, F
     // Calculate starting position from right edge
     uint16_t start_x = (right_x > total_width) ? (right_x - total_width) : 0;
 
+    // if the start_x is less than 0, set it to 0
+    if (start_x < 0)
+    {
+        start_x = 0;
+    }
+
     // Display the string starting from calculated position
     EPD_ShowString(start_x, y, chr, font_size, color, true);
 }
