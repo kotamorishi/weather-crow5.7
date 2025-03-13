@@ -6336,7 +6336,7 @@ const FontChar char_92_21 = {
     .width = (uint8_t)21,
     .height = (uint8_t)69,
     .vertical_offset = (int8_t)-31,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)3,
     .bitmap = font_92_21
 };
@@ -6347,7 +6347,7 @@ const FontChar char_92_22 = {
     .width = (uint8_t)34,
     .height = (uint8_t)21,
     .vertical_offset = (int8_t)-37,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)5,
     .bitmap = font_92_22
 };
@@ -6358,7 +6358,7 @@ const FontChar char_92_23 = {
     .width = (uint8_t)81,
     .height = (uint8_t)68,
     .vertical_offset = (int8_t)-31,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)11,
     .bitmap = font_92_23
 };
@@ -6369,7 +6369,7 @@ const FontChar char_92_24 = {
     .width = (uint8_t)53,
     .height = (uint8_t)81,
     .vertical_offset = (int8_t)-36,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)7,
     .bitmap = font_92_24
 };
@@ -6380,7 +6380,7 @@ const FontChar char_92_25 = {
     .width = (uint8_t)78,
     .height = (uint8_t)67,
     .vertical_offset = (int8_t)-29,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)10,
     .bitmap = font_92_25
 };
@@ -6391,7 +6391,7 @@ const FontChar char_92_26 = {
     .width = (uint8_t)71,
     .height = (uint8_t)67,
     .vertical_offset = (int8_t)-29,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)9,
     .bitmap = font_92_26
 };
@@ -6402,7 +6402,7 @@ const FontChar char_92_27 = {
     .width = (uint8_t)14,
     .height = (uint8_t)21,
     .vertical_offset = (int8_t)-37,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)2,
     .bitmap = font_92_27
 };
@@ -6413,7 +6413,7 @@ const FontChar char_92_28 = {
     .width = (uint8_t)37,
     .height = (uint8_t)103,
     .vertical_offset = (int8_t)-46,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)5,
     .bitmap = font_92_28
 };
@@ -6424,7 +6424,7 @@ const FontChar char_92_29 = {
     .width = (uint8_t)37,
     .height = (uint8_t)103,
     .vertical_offset = (int8_t)-46,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)5,
     .bitmap = font_92_29
 };
@@ -6435,7 +6435,7 @@ const FontChar char_92_2a = {
     .width = (uint8_t)36,
     .height = (uint8_t)35,
     .vertical_offset = (int8_t)-31,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)5,
     .bitmap = font_92_2a
 };
@@ -6446,7 +6446,7 @@ const FontChar char_92_2b = {
     .width = (uint8_t)47,
     .height = (uint8_t)46,
     .vertical_offset = (int8_t)-17,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)6,
     .bitmap = font_92_2b
 };
@@ -6457,7 +6457,7 @@ const FontChar char_92_2c = {
     .width = (uint8_t)21,
     .height = (uint8_t)26,
     .vertical_offset = (int8_t)22,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)3,
     .bitmap = font_92_2c
 };
@@ -6468,7 +6468,7 @@ const FontChar char_92_2d = {
     .width = (uint8_t)42,
     .height = (uint8_t)15,
     .vertical_offset = (int8_t)-2,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)6,
     .bitmap = font_92_2d
 };
@@ -6479,7 +6479,7 @@ const FontChar char_92_2e = {
     .width = (uint8_t)21,
     .height = (uint8_t)18,
     .vertical_offset = (int8_t)20,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)3,
     .bitmap = font_92_2e
 };
@@ -6490,7 +6490,7 @@ const FontChar char_92_2f = {
     .width = (uint8_t)40,
     .height = (uint8_t)105,
     .vertical_offset = (int8_t)-50,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)5,
     .bitmap = font_92_2f
 };
@@ -6501,7 +6501,7 @@ const FontChar char_92_30 = {
     .width = (uint8_t)54,
     .height = (uint8_t)68,
     .vertical_offset = (int8_t)-31,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)7,
     .bitmap = font_92_30
 };
@@ -6512,7 +6512,7 @@ const FontChar char_92_31 = {
     .width = (uint8_t)29,
     .height = (uint8_t)67,
     .vertical_offset = (int8_t)-30,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)4,
     .bitmap = font_92_31
 };
@@ -6523,7 +6523,7 @@ const FontChar char_92_32 = {
     .width = (uint8_t)47,
     .height = (uint8_t)67,
     .vertical_offset = (int8_t)-31,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)6,
     .bitmap = font_92_32
 };
@@ -6534,7 +6534,7 @@ const FontChar char_92_33 = {
     .width = (uint8_t)48,
     .height = (uint8_t)69,
     .vertical_offset = (int8_t)-31,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)6,
     .bitmap = font_92_33
 };
@@ -6545,7 +6545,7 @@ const FontChar char_92_34 = {
     .width = (uint8_t)55,
     .height = (uint8_t)66,
     .vertical_offset = (int8_t)-29,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)7,
     .bitmap = font_92_34
 };
@@ -6556,7 +6556,7 @@ const FontChar char_92_35 = {
     .width = (uint8_t)48,
     .height = (uint8_t)67,
     .vertical_offset = (int8_t)-30,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)6,
     .bitmap = font_92_35
 };
@@ -6567,7 +6567,7 @@ const FontChar char_92_36 = {
     .width = (uint8_t)49,
     .height = (uint8_t)69,
     .vertical_offset = (int8_t)-31,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)7,
     .bitmap = font_92_36
 };
@@ -6578,7 +6578,7 @@ const FontChar char_92_37 = {
     .width = (uint8_t)45,
     .height = (uint8_t)67,
     .vertical_offset = (int8_t)-30,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)6,
     .bitmap = font_92_37
 };
@@ -6589,7 +6589,7 @@ const FontChar char_92_38 = {
     .width = (uint8_t)51,
     .height = (uint8_t)69,
     .vertical_offset = (int8_t)-31,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)7,
     .bitmap = font_92_38
 };
@@ -6600,7 +6600,7 @@ const FontChar char_92_39 = {
     .width = (uint8_t)49,
     .height = (uint8_t)69,
     .vertical_offset = (int8_t)-31,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)7,
     .bitmap = font_92_39
 };
@@ -6611,7 +6611,7 @@ const FontChar char_92_3a = {
     .width = (uint8_t)21,
     .height = (uint8_t)56,
     .vertical_offset = (int8_t)-18,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)3,
     .bitmap = font_92_3a
 };
@@ -6622,7 +6622,7 @@ const FontChar char_92_3b = {
     .width = (uint8_t)22,
     .height = (uint8_t)65,
     .vertical_offset = (int8_t)-17,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)3,
     .bitmap = font_92_3b
 };
@@ -6633,7 +6633,7 @@ const FontChar char_92_3c = {
     .width = (uint8_t)39,
     .height = (uint8_t)40,
     .vertical_offset = (int8_t)-14,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)5,
     .bitmap = font_92_3c
 };
@@ -6644,7 +6644,7 @@ const FontChar char_92_3d = {
     .width = (uint8_t)53,
     .height = (uint8_t)41,
     .vertical_offset = (int8_t)-15,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)7,
     .bitmap = font_92_3d
 };
@@ -6655,7 +6655,7 @@ const FontChar char_92_3e = {
     .width = (uint8_t)40,
     .height = (uint8_t)40,
     .vertical_offset = (int8_t)-14,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)5,
     .bitmap = font_92_3e
 };
@@ -6666,7 +6666,7 @@ const FontChar char_92_3f = {
     .width = (uint8_t)45,
     .height = (uint8_t)70,
     .vertical_offset = (int8_t)-32,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)6,
     .bitmap = font_92_3f
 };
@@ -6677,7 +6677,7 @@ const FontChar char_92_40 = {
     .width = (uint8_t)88,
     .height = (uint8_t)83,
     .vertical_offset = (int8_t)-25,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)11,
     .bitmap = font_92_40
 };
@@ -6688,7 +6688,7 @@ const FontChar char_92_41 = {
     .width = (uint8_t)68,
     .height = (uint8_t)65,
     .vertical_offset = (int8_t)-28,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)9,
     .bitmap = font_92_41
 };
@@ -6699,7 +6699,7 @@ const FontChar char_92_42 = {
     .width = (uint8_t)54,
     .height = (uint8_t)64,
     .vertical_offset = (int8_t)-27,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)7,
     .bitmap = font_92_42
 };
@@ -6710,7 +6710,7 @@ const FontChar char_92_43 = {
     .width = (uint8_t)63,
     .height = (uint8_t)65,
     .vertical_offset = (int8_t)-27,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)8,
     .bitmap = font_92_43
 };
@@ -6721,7 +6721,7 @@ const FontChar char_92_44 = {
     .width = (uint8_t)59,
     .height = (uint8_t)64,
     .vertical_offset = (int8_t)-27,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)8,
     .bitmap = font_92_44
 };
@@ -6732,7 +6732,7 @@ const FontChar char_92_45 = {
     .width = (uint8_t)42,
     .height = (uint8_t)64,
     .vertical_offset = (int8_t)-27,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)6,
     .bitmap = font_92_45
 };
@@ -6743,7 +6743,7 @@ const FontChar char_92_46 = {
     .width = (uint8_t)44,
     .height = (uint8_t)64,
     .vertical_offset = (int8_t)-27,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)6,
     .bitmap = font_92_46
 };
@@ -6754,7 +6754,7 @@ const FontChar char_92_47 = {
     .width = (uint8_t)64,
     .height = (uint8_t)65,
     .vertical_offset = (int8_t)-27,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)8,
     .bitmap = font_92_47
 };
@@ -6765,7 +6765,7 @@ const FontChar char_92_48 = {
     .width = (uint8_t)58,
     .height = (uint8_t)64,
     .vertical_offset = (int8_t)-27,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)8,
     .bitmap = font_92_48
 };
@@ -6776,7 +6776,7 @@ const FontChar char_92_49 = {
     .width = (uint8_t)18,
     .height = (uint8_t)64,
     .vertical_offset = (int8_t)-27,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)3,
     .bitmap = font_92_49
 };
@@ -6787,7 +6787,7 @@ const FontChar char_92_4a = {
     .width = (uint8_t)46,
     .height = (uint8_t)66,
     .vertical_offset = (int8_t)-28,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)6,
     .bitmap = font_92_4a
 };
@@ -6798,7 +6798,7 @@ const FontChar char_92_4b = {
     .width = (uint8_t)60,
     .height = (uint8_t)64,
     .vertical_offset = (int8_t)-27,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)8,
     .bitmap = font_92_4b
 };
@@ -6809,7 +6809,7 @@ const FontChar char_92_4c = {
     .width = (uint8_t)38,
     .height = (uint8_t)65,
     .vertical_offset = (int8_t)-28,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)5,
     .bitmap = font_92_4c
 };
@@ -6820,7 +6820,7 @@ const FontChar char_92_4d = {
     .width = (uint8_t)76,
     .height = (uint8_t)64,
     .vertical_offset = (int8_t)-27,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)10,
     .bitmap = font_92_4d
 };
@@ -6831,7 +6831,7 @@ const FontChar char_92_4e = {
     .width = (uint8_t)60,
     .height = (uint8_t)64,
     .vertical_offset = (int8_t)-27,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)8,
     .bitmap = font_92_4e
 };
@@ -6842,7 +6842,7 @@ const FontChar char_92_4f = {
     .width = (uint8_t)66,
     .height = (uint8_t)65,
     .vertical_offset = (int8_t)-27,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)9,
     .bitmap = font_92_4f
 };
@@ -6853,7 +6853,7 @@ const FontChar char_92_50 = {
     .width = (uint8_t)51,
     .height = (uint8_t)64,
     .vertical_offset = (int8_t)-27,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)7,
     .bitmap = font_92_50
 };
@@ -6864,7 +6864,7 @@ const FontChar char_92_51 = {
     .width = (uint8_t)68,
     .height = (uint8_t)75,
     .vertical_offset = (int8_t)-27,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)9,
     .bitmap = font_92_51
 };
@@ -6875,7 +6875,7 @@ const FontChar char_92_52 = {
     .width = (uint8_t)52,
     .height = (uint8_t)65,
     .vertical_offset = (int8_t)-28,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)7,
     .bitmap = font_92_52
 };
@@ -6886,7 +6886,7 @@ const FontChar char_92_53 = {
     .width = (uint8_t)50,
     .height = (uint8_t)67,
     .vertical_offset = (int8_t)-29,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)7,
     .bitmap = font_92_53
 };
@@ -6897,7 +6897,7 @@ const FontChar char_92_54 = {
     .width = (uint8_t)52,
     .height = (uint8_t)64,
     .vertical_offset = (int8_t)-27,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)7,
     .bitmap = font_92_54
 };
@@ -6908,7 +6908,7 @@ const FontChar char_92_55 = {
     .width = (uint8_t)56,
     .height = (uint8_t)66,
     .vertical_offset = (int8_t)-28,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)7,
     .bitmap = font_92_55
 };
@@ -6919,7 +6919,7 @@ const FontChar char_92_56 = {
     .width = (uint8_t)68,
     .height = (uint8_t)65,
     .vertical_offset = (int8_t)-28,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)9,
     .bitmap = font_92_56
 };
@@ -6930,7 +6930,7 @@ const FontChar char_92_57 = {
     .width = (uint8_t)93,
     .height = (uint8_t)64,
     .vertical_offset = (int8_t)-27,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-6,
     .bytes_per_row = (uint8_t)12,
     .bitmap = font_92_57
 };
@@ -6941,7 +6941,7 @@ const FontChar char_92_58 = {
     .width = (uint8_t)66,
     .height = (uint8_t)64,
     .vertical_offset = (int8_t)-27,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)9,
     .bitmap = font_92_58
 };
@@ -6952,7 +6952,7 @@ const FontChar char_92_59 = {
     .width = (uint8_t)64,
     .height = (uint8_t)65,
     .vertical_offset = (int8_t)-28,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)8,
     .bitmap = font_92_59
 };
@@ -6963,7 +6963,7 @@ const FontChar char_92_5a = {
     .width = (uint8_t)47,
     .height = (uint8_t)64,
     .vertical_offset = (int8_t)-27,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)6,
     .bitmap = font_92_5a
 };
@@ -6974,7 +6974,7 @@ const FontChar char_92_5b = {
     .width = (uint8_t)32,
     .height = (uint8_t)103,
     .vertical_offset = (int8_t)-46,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)4,
     .bitmap = font_92_5b
 };
@@ -6985,7 +6985,7 @@ const FontChar char_92_5c = {
     .width = (uint8_t)40,
     .height = (uint8_t)105,
     .vertical_offset = (int8_t)-50,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)5,
     .bitmap = font_92_5c
 };
@@ -6996,7 +6996,7 @@ const FontChar char_92_5d = {
     .width = (uint8_t)32,
     .height = (uint8_t)103,
     .vertical_offset = (int8_t)-46,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)4,
     .bitmap = font_92_5d
 };
@@ -7007,7 +7007,7 @@ const FontChar char_92_5e = {
     .width = (uint8_t)62,
     .height = (uint8_t)50,
     .vertical_offset = (int8_t)-28,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)8,
     .bitmap = font_92_5e
 };
@@ -7018,7 +7018,7 @@ const FontChar char_92_5f = {
     .width = (uint8_t)60,
     .height = (uint8_t)17,
     .vertical_offset = (int8_t)41,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)8,
     .bitmap = font_92_5f
 };
@@ -7029,7 +7029,7 @@ const FontChar char_92_60 = {
     .width = (uint8_t)23,
     .height = (uint8_t)22,
     .vertical_offset = (int8_t)-41,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)3,
     .bitmap = font_92_60
 };
@@ -7040,7 +7040,7 @@ const FontChar char_92_61 = {
     .width = (uint8_t)55,
     .height = (uint8_t)52,
     .vertical_offset = (int8_t)-14,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)7,
     .bitmap = font_92_61
 };
@@ -7051,7 +7051,7 @@ const FontChar char_92_62 = {
     .width = (uint8_t)55,
     .height = (uint8_t)69,
     .vertical_offset = (int8_t)-31,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)7,
     .bitmap = font_92_62
 };
@@ -7062,7 +7062,7 @@ const FontChar char_92_63 = {
     .width = (uint8_t)51,
     .height = (uint8_t)52,
     .vertical_offset = (int8_t)-14,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)7,
     .bitmap = font_92_63
 };
@@ -7073,7 +7073,7 @@ const FontChar char_92_64 = {
     .width = (uint8_t)55,
     .height = (uint8_t)69,
     .vertical_offset = (int8_t)-31,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)7,
     .bitmap = font_92_64
 };
@@ -7084,7 +7084,7 @@ const FontChar char_92_65 = {
     .width = (uint8_t)52,
     .height = (uint8_t)53,
     .vertical_offset = (int8_t)-15,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)7,
     .bitmap = font_92_65
 };
@@ -7095,7 +7095,7 @@ const FontChar char_92_66 = {
     .width = (uint8_t)32,
     .height = (uint8_t)72,
     .vertical_offset = (int8_t)-35,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)4,
     .bitmap = font_92_66
 };
@@ -7106,7 +7106,7 @@ const FontChar char_92_67 = {
     .width = (uint8_t)55,
     .height = (uint8_t)76,
     .vertical_offset = (int8_t)-14,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)7,
     .bitmap = font_92_67
 };
@@ -7117,7 +7117,7 @@ const FontChar char_92_68 = {
     .width = (uint8_t)53,
     .height = (uint8_t)68,
     .vertical_offset = (int8_t)-31,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)7,
     .bitmap = font_92_68
 };
@@ -7128,7 +7128,7 @@ const FontChar char_92_69 = {
     .width = (uint8_t)21,
     .height = (uint8_t)74,
     .vertical_offset = (int8_t)-37,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)3,
     .bitmap = font_92_69
 };
@@ -7139,7 +7139,7 @@ const FontChar char_92_6a = {
     .width = (uint8_t)25,
     .height = (uint8_t)99,
     .vertical_offset = (int8_t)-37,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)4,
     .bitmap = font_92_6a
 };
@@ -7150,7 +7150,7 @@ const FontChar char_92_6b = {
     .width = (uint8_t)54,
     .height = (uint8_t)68,
     .vertical_offset = (int8_t)-31,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)7,
     .bitmap = font_92_6b
 };
@@ -7161,7 +7161,7 @@ const FontChar char_92_6c = {
     .width = (uint8_t)18,
     .height = (uint8_t)68,
     .vertical_offset = (int8_t)-31,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)3,
     .bitmap = font_92_6c
 };
@@ -7172,7 +7172,7 @@ const FontChar char_92_6d = {
     .width = (uint8_t)88,
     .height = (uint8_t)51,
     .vertical_offset = (int8_t)-14,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)11,
     .bitmap = font_92_6d
 };
@@ -7183,7 +7183,7 @@ const FontChar char_92_6e = {
     .width = (uint8_t)53,
     .height = (uint8_t)51,
     .vertical_offset = (int8_t)-14,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)7,
     .bitmap = font_92_6e
 };
@@ -7194,7 +7194,7 @@ const FontChar char_92_6f = {
     .width = (uint8_t)54,
     .height = (uint8_t)52,
     .vertical_offset = (int8_t)-14,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)7,
     .bitmap = font_92_6f
 };
@@ -7205,7 +7205,7 @@ const FontChar char_92_70 = {
     .width = (uint8_t)55,
     .height = (uint8_t)76,
     .vertical_offset = (int8_t)-14,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)7,
     .bitmap = font_92_70
 };
@@ -7216,7 +7216,7 @@ const FontChar char_92_71 = {
     .width = (uint8_t)55,
     .height = (uint8_t)76,
     .vertical_offset = (int8_t)-14,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)7,
     .bitmap = font_92_71
 };
@@ -7227,7 +7227,7 @@ const FontChar char_92_72 = {
     .width = (uint8_t)35,
     .height = (uint8_t)52,
     .vertical_offset = (int8_t)-15,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)5,
     .bitmap = font_92_72
 };
@@ -7238,7 +7238,7 @@ const FontChar char_92_73 = {
     .width = (uint8_t)46,
     .height = (uint8_t)53,
     .vertical_offset = (int8_t)-15,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)6,
     .bitmap = font_92_73
 };
@@ -7249,7 +7249,7 @@ const FontChar char_92_74 = {
     .width = (uint8_t)34,
     .height = (uint8_t)64,
     .vertical_offset = (int8_t)-27,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)5,
     .bitmap = font_92_74
 };
@@ -7260,7 +7260,7 @@ const FontChar char_92_75 = {
     .width = (uint8_t)53,
     .height = (uint8_t)52,
     .vertical_offset = (int8_t)-14,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)7,
     .bitmap = font_92_75
 };
@@ -7271,7 +7271,7 @@ const FontChar char_92_76 = {
     .width = (uint8_t)58,
     .height = (uint8_t)51,
     .vertical_offset = (int8_t)-14,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)8,
     .bitmap = font_92_76
 };
@@ -7282,7 +7282,7 @@ const FontChar char_92_77 = {
     .width = (uint8_t)81,
     .height = (uint8_t)51,
     .vertical_offset = (int8_t)-14,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)11,
     .bitmap = font_92_77
 };
@@ -7293,7 +7293,7 @@ const FontChar char_92_78 = {
     .width = (uint8_t)56,
     .height = (uint8_t)51,
     .vertical_offset = (int8_t)-14,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)7,
     .bitmap = font_92_78
 };
@@ -7304,7 +7304,7 @@ const FontChar char_92_79 = {
     .width = (uint8_t)60,
     .height = (uint8_t)76,
     .vertical_offset = (int8_t)-14,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)8,
     .bitmap = font_92_79
 };
@@ -7315,7 +7315,7 @@ const FontChar char_92_7a = {
     .width = (uint8_t)42,
     .height = (uint8_t)51,
     .vertical_offset = (int8_t)-14,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)6,
     .bitmap = font_92_7a
 };
@@ -7326,7 +7326,7 @@ const FontChar char_92_7b = {
     .width = (uint8_t)33,
     .height = (uint8_t)103,
     .vertical_offset = (int8_t)-46,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)5,
     .bitmap = font_92_7b
 };
@@ -7337,7 +7337,7 @@ const FontChar char_92_7c = {
     .width = (uint8_t)18,
     .height = (uint8_t)88,
     .vertical_offset = (int8_t)-38,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)3,
     .bitmap = font_92_7c
 };
@@ -7348,7 +7348,7 @@ const FontChar char_92_7d = {
     .width = (uint8_t)33,
     .height = (uint8_t)103,
     .vertical_offset = (int8_t)-46,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)5,
     .bitmap = font_92_7d
 };
@@ -7359,106 +7359,106 @@ const FontChar char_92_7e = {
     .width = (uint8_t)58,
     .height = (uint8_t)21,
     .vertical_offset = (int8_t)-2,
-    .horizontal_offset = (int8_t)0,
+    .horizontal_offset = (int8_t)-2,
     .bytes_per_row = (uint8_t)8,
     .bitmap = font_92_7e
 };
 
 const FontChar * const font_92_chars[] = {
-    &char_92_21, 
-    &char_92_22, 
-    &char_92_23, 
-    &char_92_24, 
-    &char_92_25, 
-    &char_92_26, 
-    &char_92_27, 
-    &char_92_28, 
-    &char_92_29, 
-    &char_92_2a, 
-    &char_92_2b, 
-    &char_92_2c, 
-    &char_92_2d, 
-    &char_92_2e, 
-    &char_92_2f, 
-    &char_92_30, 
-    &char_92_31, 
-    &char_92_32, 
-    &char_92_33, 
-    &char_92_34, 
-    &char_92_35, 
-    &char_92_36, 
-    &char_92_37, 
-    &char_92_38, 
-    &char_92_39, 
-    &char_92_3a, 
-    &char_92_3b, 
-    &char_92_3c, 
-    &char_92_3d, 
-    &char_92_3e, 
-    &char_92_3f, 
-    &char_92_40, 
-    &char_92_41, 
-    &char_92_42, 
-    &char_92_43, 
-    &char_92_44, 
-    &char_92_45, 
-    &char_92_46, 
-    &char_92_47, 
-    &char_92_48, 
-    &char_92_49, 
-    &char_92_4a, 
-    &char_92_4b, 
-    &char_92_4c, 
-    &char_92_4d, 
-    &char_92_4e, 
-    &char_92_4f, 
-    &char_92_50, 
-    &char_92_51, 
-    &char_92_52, 
-    &char_92_53, 
-    &char_92_54, 
-    &char_92_55, 
-    &char_92_56, 
-    &char_92_57, 
-    &char_92_58, 
-    &char_92_59, 
-    &char_92_5a, 
-    &char_92_5b, 
-    &char_92_5c, 
-    &char_92_5d, 
-    &char_92_5e, 
-    &char_92_5f, 
-    &char_92_60, 
-    &char_92_61, 
-    &char_92_62, 
-    &char_92_63, 
-    &char_92_64, 
-    &char_92_65, 
-    &char_92_66, 
-    &char_92_67, 
-    &char_92_68, 
-    &char_92_69, 
-    &char_92_6a, 
-    &char_92_6b, 
-    &char_92_6c, 
-    &char_92_6d, 
-    &char_92_6e, 
-    &char_92_6f, 
-    &char_92_70, 
-    &char_92_71, 
-    &char_92_72, 
-    &char_92_73, 
-    &char_92_74, 
-    &char_92_75, 
-    &char_92_76, 
-    &char_92_77, 
-    &char_92_78, 
-    &char_92_79, 
-    &char_92_7a, 
-    &char_92_7b, 
-    &char_92_7c, 
-    &char_92_7d, 
-    &char_92_7e 
+    &char_92_21,
+    &char_92_22,
+    &char_92_23,
+    &char_92_24,
+    &char_92_25,
+    &char_92_26,
+    &char_92_27,
+    &char_92_28,
+    &char_92_29,
+    &char_92_2a,
+    &char_92_2b,
+    &char_92_2c,
+    &char_92_2d,
+    &char_92_2e,
+    &char_92_2f,
+    &char_92_30,
+    &char_92_31,
+    &char_92_32,
+    &char_92_33,
+    &char_92_34,
+    &char_92_35,
+    &char_92_36,
+    &char_92_37,
+    &char_92_38,
+    &char_92_39,
+    &char_92_3a,
+    &char_92_3b,
+    &char_92_3c,
+    &char_92_3d,
+    &char_92_3e,
+    &char_92_3f,
+    &char_92_40,
+    &char_92_41,
+    &char_92_42,
+    &char_92_43,
+    &char_92_44,
+    &char_92_45,
+    &char_92_46,
+    &char_92_47,
+    &char_92_48,
+    &char_92_49,
+    &char_92_4a,
+    &char_92_4b,
+    &char_92_4c,
+    &char_92_4d,
+    &char_92_4e,
+    &char_92_4f,
+    &char_92_50,
+    &char_92_51,
+    &char_92_52,
+    &char_92_53,
+    &char_92_54,
+    &char_92_55,
+    &char_92_56,
+    &char_92_57,
+    &char_92_58,
+    &char_92_59,
+    &char_92_5a,
+    &char_92_5b,
+    &char_92_5c,
+    &char_92_5d,
+    &char_92_5e,
+    &char_92_5f,
+    &char_92_60,
+    &char_92_61,
+    &char_92_62,
+    &char_92_63,
+    &char_92_64,
+    &char_92_65,
+    &char_92_66,
+    &char_92_67,
+    &char_92_68,
+    &char_92_69,
+    &char_92_6a,
+    &char_92_6b,
+    &char_92_6c,
+    &char_92_6d,
+    &char_92_6e,
+    &char_92_6f,
+    &char_92_70,
+    &char_92_71,
+    &char_92_72,
+    &char_92_73,
+    &char_92_74,
+    &char_92_75,
+    &char_92_76,
+    &char_92_77,
+    &char_92_78,
+    &char_92_79,
+    &char_92_7a,
+    &char_92_7b,
+    &char_92_7c,
+    &char_92_7d,
+    &char_92_7e
 };
 
 const FontSet font_92 = {
