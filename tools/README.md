@@ -42,7 +42,7 @@ typedef struct {
     uint8_t width;          // Character width in pixels (max 255)
     uint8_t height;         // Character width in pixels (max 255)
     int8_t vertical_offset;   // Offset from top of the line to the top of the character (could be negative)
-    int8_t horizontal_offset; // Offset from the left of the line to the left of the character (could be negative)
+    int8_t horizontal_offset; // Offset from the left of the line to the left of the character (could be negative) AKA kerning
     uint8_t bytes_per_row;  // Number of bytes per row (max 255)
     const uint8_t *bitmap;  // Pointer to bitmap data
 } FontChar;
