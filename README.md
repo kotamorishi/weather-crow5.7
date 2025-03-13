@@ -44,9 +44,10 @@ The weather data is fetched from the [OpenWeatherMap](https://openweathermap.org
     - Go to Tools > Port and select the port where the CrowPanel ESP32 E-Paper HMI 5.79-inch Display is connected
 
 5. Upload the code
+    - Set the `baud rate to 115200` in the serial monitor.
     - Connect the CrowPanel ESP32 E-Paper HMI 5.79-inch Display to your computer
-    - Select the correct board and port in Arduino IDE
     - Click the Upload button
+
 
 # Credits
 - Icons:
