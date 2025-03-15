@@ -303,48 +303,87 @@ private:
   /**
    * Fetches weather information from OpenWeatherMap API
    */
-  bool getWeatherInfo(uint8_t retryCount = 0)
+  bool getWeatherInfo(uint8_t maxRetries = 3)
   {
-    errorMessageBuffer = "getWeatherInfo() failed.";
-    httpResponseCode = HTTP_NOT_REQUESTED_YET;
-    if (WiFi.status() != WL_CONNECTED)
-    {
-      errorMessageBuffer = "Wireless network not established.";
-      return false;
-    }
+    uint8_t currentRetry = 0;
+    bool success = false;
 
-    // Construct API endpoint URL and make request
-    String apiEndPoint = constructApiEndpointUrl();
-    jsonBuffer = httpsGETRequest(apiEndPoint.c_str());
+    while (currentRetry <= maxRetries && !success) {
+      if (currentRetry > 0) {
+        logPrint("Retry attempt ");
+        logPrint(currentRetry);
+        logPrintln(" of weather data fetch...");
+        // Exponential backoff: 1s, 2s, 4s...
+        delay(1000 * (1 << (currentRetry - 1)));
+      }
 
-    // Wait for response to complete
-    while (httpResponseCode < 0)
-    {
-      delay(100);
-    }
+      errorMessageBuffer = "getWeatherInfo() failed.";
+      httpResponseCode = HTTP_NOT_REQUESTED_YET;
+      if (WiFi.status() != WL_CONNECTED)
+      {
+        errorMessageBuffer = "Wireless network not available.";
+        return false;
+      }
 
-    logPrint("HTTP response code: ");
-    logPrintln(httpResponseCode);
+      // Construct API endpoint URL and make request
+      String apiEndPoint = constructApiEndpointUrl();
+      jsonBuffer = httpsGETRequest(apiEndPoint.c_str());
 
-    // Check for HTTP errors
-    if (httpResponseCode != HTTP_CODE_OK)
-    {
-      errorMessageBuffer = "Weather API failed with HTTP code: " + String(httpResponseCode) +
+      // Wait for response to complete
+      // Add timeout to prevent infinite loop
+      const unsigned long HTTP_TIMEOUT_MS = 5000; // Match HTTP timeout (5 seconds)
+      unsigned long startTime = millis();
+      while (httpResponseCode < 0 && (millis() - startTime) < HTTP_TIMEOUT_MS)
+      {
+        delay(100);
+      }
+
+      // Check if timeout occurred or non-success status code
+      if (httpResponseCode < 0)
+      {
+        logPrintln("HTTP request timed out.");
+        currentRetry++;
+        continue;
+      }
+
+      logPrint("HTTP response code: ");
+      logPrintln(httpResponseCode);
+
+      // Check for HTTP errors
+      if (httpResponseCode != HTTP_CODE_OK)
+      {
+        errorMessageBuffer = "Weather API failed with HTTP code: " + String(httpResponseCode) +
                            "\n\nThis typically happens due to a weather API server issue or an invalid API key.";
-      return false;
+
+        // Only retry on server errors (5xx) or certain client errors, don't retry on 4xx errors
+        if (httpResponseCode >= HTTP_CODE_INTERNAL_SERVER_ERROR || httpResponseCode == HTTP_CODE_TOO_MANY_REQUESTS) {
+          currentRetry++;
+          continue;
+        }
+        return false; // Don't retry for other error codes
+      }
+
+      // Parse JSON response
+      DeserializationError error = deserializeJson(weatherApiResponse, jsonBuffer);
+      if (error)
+      {
+        logPrint(F("deserializeJson() failed: "));
+        logPrintln(error.c_str());
+        errorMessageBuffer = "JSON parsing error: " + String(error.c_str());
+        currentRetry++;
+        continue;
+      }
+
+      success = processWeatherData();
+      if (!success) {
+        currentRetry++;
+      }
     }
 
-    // Parse JSON response
-    DeserializationError error = deserializeJson(weatherApiResponse, jsonBuffer);
-    if (error)
-    {
-      logPrint(F("deserializeJson() failed: "));
-      logPrintln(error.c_str());
-      errorMessageBuffer = "JSON parsing error: " + String(error.c_str());
-      return false;
+    if (!success) {
+      logPrintln("Failed to get weather info after all retry attempts");
     }
-
-    return processWeatherData();
+    return success;
   }
 
   void drawForecastItem(uint16_t x, uint16_t y, JsonObject hourlyData)
@@ -714,6 +753,118 @@ private:
     displayErrorMessage(title, description);
   }
 
+  void displayTypographyTest()
+  {
+    clearScreen();
+    char buffer[STRING_BUFFER_SIZE];
+
+    memset(buffer, 0, sizeof(buffer));
+    snprintf(buffer, sizeof(buffer), "ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz 0123456789");
+    EPD_ShowStringRightAligned(790, 10, buffer, FONT_SIZE_8, BLACK);
+
+    memset(buffer, 0, sizeof(buffer));
+    snprintf(buffer, sizeof(buffer), "ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz 0123456789");
+    EPD_ShowStringRightAligned(790, 30, buffer, FONT_SIZE_16, BLACK);
+
+    memset(buffer, 0, sizeof(buffer));
+    snprintf(buffer, sizeof(buffer), "ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+    EPD_ShowStringRightAligned(790, 80, buffer, FONT_SIZE_36, BLACK);
+
+    memset(buffer, 0, sizeof(buffer));
+    snprintf(buffer, sizeof(buffer), "abcdefghijklmnopqrstuvwxyz");
+    EPD_ShowStringRightAligned(790, 120, buffer, FONT_SIZE_36, BLACK);
+
+    memset(buffer, 0, sizeof(buffer));
+    snprintf(buffer, sizeof(buffer), "Pixel perfection");
+    EPD_ShowStringRightAligned(790, 210, buffer, FONT_SIZE_92, BLACK);
+
+    // Update display
+    EPD_Display(imageBW);
+    EPD_PartUpdate();
+    EPD_DeepSleep();
+  }
+
+  void displayCustomFontTest(){
+    clearScreen();
+    char buffer[STRING_BUFFER_SIZE];
+
+    memset(buffer, 0, sizeof(buffer));
+    snprintf(buffer, sizeof(buffer), "Hello.");
+    EPD_ShowString(60, 85, buffer, FONT_SIZE_102, BLACK, true);
+
+    memset(buffer, 0, sizeof(buffer));
+    snprintf(buffer, sizeof(buffer), "Included font file converter tool.");
+    EPD_ShowString(80, 160, buffer, FONT_SIZE_36, BLACK);
+
+    memset(buffer, 0, sizeof(buffer));
+    snprintf(buffer, sizeof(buffer), "You don't need to build the font from scratch. Just convert it.");
+    EPD_ShowString(80, 200, buffer, FONT_SIZE_16, BLACK);
+
+
+
+    // Update display
+    EPD_Display(imageBW);
+    EPD_PartUpdate();
+    EPD_DeepSleep();
+
+
+  }
+
+  void displayIconsTest()
+  {
+    clearScreen();
+
+    int ypos = 0;
+
+    //EPD_drawImage(0, 100, leo_face_lg);
+    EPD_drawImage(0, ypos, icon_map["icon_01d_sm"]);
+    EPD_drawImage(60, ypos, icon_map["icon_01n_sm"]);
+    EPD_drawImage(120, ypos, icon_map["icon_02d_sm"]);
+    EPD_drawImage(180, ypos, icon_map["icon_02n_sm"]);
+    EPD_drawImage(240, ypos, icon_map["icon_03d_sm"]);
+    EPD_drawImage(300, ypos, icon_map["icon_03n_sm"]);
+    EPD_drawImage(360, ypos, icon_map["icon_04d_sm"]);
+    EPD_drawImage(420, ypos, icon_map["icon_04n_sm"]);
+    EPD_drawImage(480, ypos, icon_map["icon_09d_sm"]);
+    EPD_drawImage(540, ypos, icon_map["icon_09n_sm"]);
+    EPD_drawImage(600, ypos, icon_map["icon_10d_sm"]);
+    EPD_drawImage(660, ypos, icon_map["icon_10n_sm"]);
+    EPD_drawImage(720, ypos, icon_map["icon_11d_sm"]);
+
+    ypos = 60;
+    EPD_drawImage(0, ypos, icon_map["icon_11n_sm"]);
+    EPD_drawImage(60, ypos, icon_map["icon_13d_sm"]);
+    EPD_drawImage(120, ypos, icon_map["icon_13n_sm"]);
+
+    const char* icons[] = {
+      "wind_sm", "raindrop_sm", "sunrise_sm", "snow_sm", "dust_sm",
+      "rain_sm", "sunset_sm", "humidity_sm", "barometer_sm", "degrees_sm", "na_md"
+    };
+
+    for (int i = 0; i < sizeof(icons) / sizeof(icons[0]); ++i) {
+      EPD_drawImage(200 + i * 30, ypos, icon_map[icons[i]]);
+    }
+
+    EPD_drawImage(550, 15, icon_map["icon_04n_lg"]);
+    EPD_drawImage(0, 200, icon_map["error_sm"]);
+
+    char buffer[STRING_BUFFER_SIZE];
+    memset(buffer, 0, sizeof(buffer));
+    snprintf(buffer, sizeof(buffer), "Weather Icons.");
+    EPD_ShowStringRightAligned(790, 230, buffer, FONT_SIZE_92, BLACK);
+
+    memset(buffer, 0, sizeof(buffer));
+    snprintf(buffer, sizeof(buffer), "Build-in small and large");
+    EPD_ShowString(100, 178, buffer, FONT_SIZE_38, BLACK, true);
+
+    // Update display
+    EPD_Display(imageBW);
+    EPD_PartUpdate();
+    EPD_DeepSleep();
+  }
+
+  static const uint8_t MAX_WEATHER_API_RETRIES = 3;
+
 public:
   void begin()
   {
@@ -728,18 +879,25 @@ public:
   {
     try
     {
+      //displayTypographyTest();
+      //displayCustomFontTest();
+      //displayIconsTest();
+      //delay(1000000);
       connectToWiFi();
-      if (!getWeatherInfo())
+
+      if (!getWeatherInfo(MAX_WEATHER_API_RETRIES))
       {
         char title[] = "Weather API failed.";
         char msg[256];
         memset(msg, 0, sizeof(msg));
-        strncpy(msg, errorMessageBuffer.c_str(), sizeof(msg) - 1);
+        snprintf(msg, sizeof(msg), "%s\n\n(After %d retry attempts)",
+                 errorMessageBuffer.c_str(), MAX_WEATHER_API_RETRIES);
         displayErrorMessage(title, msg);
         return false;
       }
       else
       {
+        logPrintln("Weather information retrieved successfully.");
         displayWeatherForecast();
         return true;
       }
