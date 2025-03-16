@@ -794,7 +794,7 @@ private:
 
     memset(buffer, 0, sizeof(buffer));
     snprintf(buffer, sizeof(buffer), "Hello.");
-    EPD_ShowString(60, 85, buffer, FONT_SIZE_102, BLACK, true);
+    EPD_ShowString(60, 85, buffer, FONT_SIZE_92, BLACK, true);
 
     memset(buffer, 0, sizeof(buffer));
     snprintf(buffer, sizeof(buffer), "Included font file converter tool.");
