@@ -363,6 +363,10 @@ private:
         return false; // Don't retry for other error codes
       }
 
+      // safely dicconect from WiFi to save power
+      WiFi.disconnect(true);
+      WiFi.mode(WIFI_OFF);
+
       // Parse JSON response
       DeserializationError error = deserializeJson(weatherApiResponse, jsonBuffer);
       if (error)
@@ -659,7 +663,7 @@ private:
       EPD_ShowStringRightAligned(centerX, y, buffer, FONT_SIZE_36, BLACK);
 
       memset(buffer, 0, sizeof(buffer));
-      snprintf(buffer, sizeof(buffer), "mm");
+      snprintf(buffer, sizeof(buffer), "mm snow");
       EPD_ShowString(centerX + unitOffsetX, y + unitOffsetY, buffer, FONT_SIZE_16, BLACK, false);
     }
     else if ((weatherApiResponse["current"].containsKey("rain")) &&
@@ -671,7 +675,7 @@ private:
       EPD_ShowStringRightAligned(centerX, y, buffer, FONT_SIZE_36, BLACK);
 
       memset(buffer, 0, sizeof(buffer));
-      snprintf(buffer, sizeof(buffer), "mm");
+      snprintf(buffer, sizeof(buffer), "mm rain");
       EPD_ShowString(centerX + unitOffsetX, y + unitOffsetY, buffer, FONT_SIZE_16, BLACK, false);
     }
     else if ((weatherApiResponse["current"].containsKey("uvi")) &&
@@ -694,7 +698,7 @@ private:
       EPD_ShowStringRightAligned(centerX, y, buffer, FONT_SIZE_36, BLACK);
 
       memset(buffer, 0, sizeof(buffer));
-      snprintf(buffer, sizeof(buffer), "m/s");
+      snprintf(buffer, sizeof(buffer), "m/s wind");
       EPD_ShowString(centerX + unitOffsetX, y + unitOffsetY, buffer, FONT_SIZE_16, BLACK, false);
     }
   }
