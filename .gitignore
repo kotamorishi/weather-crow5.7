@@ -15,7 +15,6 @@ weatherCrow5.7/config.h
 # Python virtual environment
 venv/
 
-svg
 tmp.png
 fonts
 
