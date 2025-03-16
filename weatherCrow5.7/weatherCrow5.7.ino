@@ -363,9 +363,8 @@ private:
         return false; // Don't retry for other error codes
       }
 
-      // safely dicconect from WiFi to save power
-      WiFi.disconnect(true);
-      WiFi.mode(WIFI_OFF);
+      // Turn off wireless as soon as possible.
+      wirelessOff();
 
       // Parse JSON response
       DeserializationError error = deserializeJson(weatherApiResponse, jsonBuffer);
@@ -737,10 +736,10 @@ private:
     EPD_drawImage(10, 1, icon_map[iconName.c_str()]);
 
     // Display current info (pressure, humidity, etc.)
-    displayCurrentInfo(360, 30);
+    displayCurrentInfo(380, 30);
 
     // Display future forecast
-    drawWeatherFutureForecast(260, 160, 5);
+    drawWeatherFutureForecast(270, 160, 5);
 
     // Update display
     EPD_Display(imageBW);
@@ -865,6 +864,13 @@ private:
     EPD_Display(imageBW);
     EPD_PartUpdate();
     EPD_DeepSleep();
+  }
+
+  void wirelessOff()
+  {
+    WiFi.disconnect(true); // disconnect from WiFi
+    WiFi.mode(WIFI_OFF); // Disable WiFi
+    btStop(); // Disable Bluetooth
   }
 
   static const uint8_t MAX_WEATHER_API_RETRIES = 3;
