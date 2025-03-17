@@ -96,9 +96,11 @@ private:
 
     while (WiFi.status() != WL_CONNECTED && millis() - startAttemptTime < WIFI_TIMEOUT_MS)
     {
-      delay(500);
+      delay(300);
       logPrint(".");
     }
+    // Restore CPU frequency to 240MHz for faster WiFi connection
+    setCpuFrequencyMhz(240);
 
     if (WiFi.status() != WL_CONNECTED)
     {
@@ -741,6 +743,9 @@ private:
     // Display future forecast
     drawWeatherFutureForecast(270, 160, 5);
 
+    // clock frequency is reduced to 80MHz to save power
+    setCpuFrequencyMhz(80);
+
     // Update display
     EPD_Display(imageBW);
     EPD_PartUpdate();
@@ -870,7 +875,7 @@ private:
   {
     WiFi.disconnect(true); // disconnect from WiFi
     WiFi.mode(WIFI_OFF); // Disable WiFi
-    btStop(); // Disable Bluetooth
+    btStop(); // Disable Bluetooth(Just in case)
   }
 
   static const uint8_t MAX_WEATHER_API_RETRIES = 3;
@@ -926,18 +931,18 @@ WeatherCrow weatherCrow;
 
 void setup()
 {
+  setCpuFrequencyMhz(80);
+  btStop(); // Disable Bluetooth, as it is not used in this project
   weatherCrow.begin();
 }
 
 void loop()
 {
-  // This delay is not necessary, however if the consecutive reboot happens due to error,
-  // e-paper keep refreshing and it is reducing the life of the display.
-  // it is better to have 30+ mins for real production.
-  delay(3000);
 
+  Serial.println("Starting weatherCrow.run()");
   if (weatherCrow.run() == true)
   {
+    Serial.println("weatherCrow.run() completed successfully");
     // success wait for the next refresh
     esp_sleep_enable_timer_wakeup(1000000ULL * 60ULL * REFRESH_MINUITES);
     esp_deep_sleep_start();
