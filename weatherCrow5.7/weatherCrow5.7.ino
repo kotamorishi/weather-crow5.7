@@ -240,7 +240,7 @@ private:
 
     // Display error icon
     // randomly draw icon
-    const char *icons[] = {"emma_cupcake_lg", "emma_mon1_lg", "leo_face_lg"};
+    const char *icons[] = {"emma_cupcake_lg", "emma_mon1_lg", "leo_face_lg", "leo_gator_lg"};
     int randomIndex = random(0, sizeof(icons) / sizeof(icons[0]));
     EPD_drawImage(30, 20, icon_map[icons[randomIndex]]);
     EPD_DrawLine(baseXpos, 110, 740, 110, BLACK);
@@ -830,14 +830,16 @@ private:
     int ypos = 0;
 
     EPD_drawImage(0, 0, icon_map["emma_cupcake_lg"]);
-    EPD_drawImage(200, 0, icon_map["emma_mon1_lg"]);
+    EPD_drawImage(170, 0, icon_map["emma_mon1_lg"]);
 
-    EPD_drawImage(400, 0, icon_map["leo_face_lg"]);
+    EPD_drawImage(350, 0, icon_map["leo_face_lg"]);
+    EPD_drawImage(550, 0, icon_map["leo_gator_lg"]);
+
 
     char buffer[STRING_BUFFER_SIZE];
     memset(buffer, 0, sizeof(buffer));
-    snprintf(buffer, sizeof(buffer), "Monsters too!");
-    EPD_ShowStringRightAligned(790, 230, buffer, FONT_SIZE_92, BLACK);
+    snprintf(buffer, sizeof(buffer), "Included monster icons too!");
+    EPD_ShowStringRightAligned(790, 250, buffer, FONT_SIZE_36, BLACK);
 
     // memset(buffer, 0, sizeof(buffer));
     // snprintf(buffer, sizeof(buffer), "Build-in small and large");
@@ -930,6 +932,7 @@ public:
       // displayTypographyTest();
       // displayCustomFontTest();
       // displayMonsterIconsTest();
+      // delay(500000);
 
       connectToWiFi();
 

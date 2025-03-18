@@ -22,6 +22,10 @@
     {
       "category": "lg",
       "sizes": [{ "width": 220, "label": "lg", "scale":0.25}]
+    },
+    {
+      "category": "extraLarge",
+      "sizes": [{ "width": 240, "label": "lg", "scale":0.25}]
     }
   ],
   "threshold": 100
