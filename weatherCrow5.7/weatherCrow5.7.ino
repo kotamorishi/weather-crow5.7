@@ -239,7 +239,10 @@ private:
     char buffer[STRING_BUFFER_SIZE];
 
     // Display error icon
-    EPD_drawImage(30, 30, leo_face_lg);
+    // randomly draw icon
+    const char *icons[] = {"emma_cupcake_lg", "emma_mon1_lg", "leo_face_lg"};
+    int randomIndex = random(0, sizeof(icons) / sizeof(icons[0]));
+    EPD_drawImage(30, 20, icon_map[icons[randomIndex]]);
     EPD_DrawLine(baseXpos, 110, 740, 110, BLACK);
 
     // Display error title
@@ -310,8 +313,10 @@ private:
     uint8_t currentRetry = 0;
     bool success = false;
 
-    while (currentRetry <= maxRetries && !success) {
-      if (currentRetry > 0) {
+    while (currentRetry <= maxRetries && !success)
+    {
+      if (currentRetry > 0)
+      {
         logPrint("Retry attempt ");
         logPrint(currentRetry);
         logPrintln(" of weather data fetch...");
@@ -355,10 +360,11 @@ private:
       if (httpResponseCode != HTTP_CODE_OK)
       {
         errorMessageBuffer = "Weather API failed with HTTP code: " + String(httpResponseCode) +
-                           "\n\nThis typically happens due to a weather API server issue or an invalid API key.";
+                             "\n\nThis typically happens due to a weather API server issue or an invalid API key.";
 
         // Only retry on server errors (5xx) or certain client errors, don't retry on 4xx errors
-        if (httpResponseCode >= HTTP_CODE_INTERNAL_SERVER_ERROR || httpResponseCode == HTTP_CODE_TOO_MANY_REQUESTS) {
+        if (httpResponseCode >= HTTP_CODE_INTERNAL_SERVER_ERROR || httpResponseCode == HTTP_CODE_TOO_MANY_REQUESTS)
+        {
           currentRetry++;
           continue;
         }
@@ -380,12 +386,14 @@ private:
       }
 
       success = processWeatherData();
-      if (!success) {
+      if (!success)
+      {
         currentRetry++;
       }
     }
 
-    if (!success) {
+    if (!success)
+    {
       logPrintln("Failed to get weather info after all retry attempts");
     }
     return success;
@@ -792,7 +800,8 @@ private:
     EPD_DeepSleep();
   }
 
-  void displayCustomFontTest(){
+  void displayCustomFontTest()
+  {
     clearScreen();
     char buffer[STRING_BUFFER_SIZE];
 
@@ -808,14 +817,36 @@ private:
     snprintf(buffer, sizeof(buffer), "You don't need to build the font from scratch. Just convert it.");
     EPD_ShowString(80, 200, buffer, FONT_SIZE_16, BLACK);
 
+    // Update display
+    EPD_Display(imageBW);
+    EPD_PartUpdate();
+    EPD_DeepSleep();
+  }
 
+  void displayMonsterIconsTest()
+  {
+    clearScreen();
+
+    int ypos = 0;
+
+    EPD_drawImage(0, 0, icon_map["emma_cupcake_lg"]);
+    EPD_drawImage(200, 0, icon_map["emma_mon1_lg"]);
+
+    EPD_drawImage(400, 0, icon_map["leo_face_lg"]);
+
+    char buffer[STRING_BUFFER_SIZE];
+    memset(buffer, 0, sizeof(buffer));
+    snprintf(buffer, sizeof(buffer), "Monsters too!");
+    EPD_ShowStringRightAligned(790, 230, buffer, FONT_SIZE_92, BLACK);
+
+    // memset(buffer, 0, sizeof(buffer));
+    // snprintf(buffer, sizeof(buffer), "Build-in small and large");
+    // EPD_ShowString(100, 178, buffer, FONT_SIZE_38, BLACK, true);
 
     // Update display
     EPD_Display(imageBW);
     EPD_PartUpdate();
     EPD_DeepSleep();
-
-
   }
 
   void displayIconsTest()
@@ -824,7 +855,7 @@ private:
 
     int ypos = 0;
 
-    //EPD_drawImage(0, 100, leo_face_lg);
+    // EPD_drawImage(0, 100, leo_face_lg);
     EPD_drawImage(0, ypos, icon_map["icon_01d_sm"]);
     EPD_drawImage(60, ypos, icon_map["icon_01n_sm"]);
     EPD_drawImage(120, ypos, icon_map["icon_02d_sm"]);
@@ -844,12 +875,12 @@ private:
     EPD_drawImage(60, ypos, icon_map["icon_13d_sm"]);
     EPD_drawImage(120, ypos, icon_map["icon_13n_sm"]);
 
-    const char* icons[] = {
-      "wind_sm", "raindrop_sm", "sunrise_sm", "snow_sm", "dust_sm",
-      "rain_sm", "sunset_sm", "humidity_sm", "barometer_sm", "degrees_sm", "na_md"
-    };
+    const char *icons[] = {
+        "wind_sm", "raindrop_sm", "sunrise_sm", "snow_sm", "dust_sm",
+        "rain_sm", "sunset_sm", "humidity_sm", "barometer_sm", "degrees_sm", "na_md"};
 
-    for (int i = 0; i < sizeof(icons) / sizeof(icons[0]); ++i) {
+    for (int i = 0; i < sizeof(icons) / sizeof(icons[0]); ++i)
+    {
       EPD_drawImage(200 + i * 30, ypos, icon_map[icons[i]]);
     }
 
@@ -874,8 +905,8 @@ private:
   void wirelessOff()
   {
     WiFi.disconnect(true); // disconnect from WiFi
-    WiFi.mode(WIFI_OFF); // Disable WiFi
-    btStop(); // Disable Bluetooth(Just in case)
+    WiFi.mode(WIFI_OFF);   // Disable WiFi
+    btStop();              // Disable Bluetooth(Just in case)
   }
 
   static const uint8_t MAX_WEATHER_API_RETRIES = 3;
@@ -894,10 +925,12 @@ public:
   {
     try
     {
-      //displayTypographyTest();
-      //displayCustomFontTest();
-      //displayIconsTest();
-      //delay(1000000);
+
+      // displayIconsTest();
+      // displayTypographyTest();
+      // displayCustomFontTest();
+      // displayMonsterIconsTest();
+
       connectToWiFi();
 
       if (!getWeatherInfo(MAX_WEATHER_API_RETRIES))

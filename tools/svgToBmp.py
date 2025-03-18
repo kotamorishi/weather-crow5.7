@@ -57,12 +57,13 @@ class SvgToBmpConverter:
         self.output_file = os.path.join(os.path.dirname(__file__), "../weatherCrow5.7/weatherIcons.h")
         self.category_base_sizes = {}  # Store base sizes for each category
         self.generated_icons = []  # Track all generated icon names
+        self.supported_extensions = ['.svg', '.png']  # Add PNG support
 
         # Initialize from config if provided
         self.config = config or {}
         self.category_configs = {cfg["category"]: cfg for cfg in self.config.get("categories", [])}
 
-    def scan_svg_files(self):
+    def scan_image_files(self):
         """Two-pass scan: first determine category dimensions, then scale consistently"""
         category_files = defaultdict(list)
         category_dimensions = defaultdict(list)
@@ -80,13 +81,21 @@ class SvgToBmpConverter:
                 continue
 
             for file in files:
-                if file.lower().endswith('.svg'):
+                file_lower = file.lower()
+                if any(file_lower.endswith(ext) for ext in self.supported_extensions):
                     full_path = os.path.join(root, file)
                     category_files[category].append(full_path)
 
                     # Analyze original proportions
                     buffer = BytesIO()
-                    cairosvg.svg2png(url=full_path, output_width=128*4, write_to=buffer)
+                    file_ext = os.path.splitext(file_lower)[1]
+
+                    if file_ext == '.svg':
+                        cairosvg.svg2png(url=full_path, output_width=128*4, write_to=buffer)
+                    else:  # PNG file
+                        with Image.open(full_path) as img:
+                            img.save(buffer, format="PNG")
+
                     buffer.seek(0)
                     with Image.open(buffer) as img:
                         bbox = img.getbbox()
@@ -168,13 +177,20 @@ class SvgToBmpConverter:
         print(f"Target dimensions for category '{category}': {width}x{height} px")
         return width, height
 
-    def convert_svg_to_png(self, svg_path, output_filename, target_width, target_height, custom_scale=None):
-        """Modified to support custom scaling factor from config"""
-        category = os.path.basename(os.path.dirname(svg_path))
+    def convert_image_to_png(self, image_path, output_filename, target_width, target_height, custom_scale=None):
+        """Convert either SVG or PNG to the target PNG"""
+        category = os.path.basename(os.path.dirname(image_path))
         buffer = BytesIO()
+        file_ext = os.path.splitext(image_path.lower())[1]
 
-        # Use high resolution for initial rendering
-        cairosvg.svg2png(url=svg_path, output_width=target_width*4, write_to=buffer)
+        # Handle file based on its extension
+        if file_ext == '.svg':
+            # SVG conversion path
+            cairosvg.svg2png(url=image_path, output_width=target_width*4, write_to=buffer)
+        else:  # PNG path
+            with Image.open(image_path) as img:
+                img.save(buffer, format="PNG")
+
         buffer.seek(0)
 
         with Image.open(buffer) as original:
@@ -186,7 +202,7 @@ class SvgToBmpConverter:
                 # If custom scale is provided in the config, use it directly
                 if custom_scale is not None:
                     category_scale = custom_scale
-                    print(f"Using custom scale: {category_scale} for {os.path.basename(svg_path)}")
+                    print(f"Using custom scale: {category_scale} for {os.path.basename(image_path)}")
                 else:
                     # Otherwise use the category-based scaling calculation
                     if category in self.category_base_sizes:
@@ -273,7 +289,7 @@ class SvgToBmpConverter:
         """Generate header content for categories and their specified sizes"""
         content = []
         self.generated_icons = []  # Reset the icon list
-        category_files = self.scan_svg_files()
+        category_files = self.scan_image_files()
 
         # Process each category with its own size configuration
         for category, files in category_files.items():
@@ -300,8 +316,8 @@ class SvgToBmpConverter:
 
                 for file_path in files:
                     print(f"Processing {file_path} at {target_width}x{target_height}")
-                    # Pass the custom_scale to the convert function
-                    self.convert_svg_to_png(file_path, "tmp.png", target_width, target_height, custom_scale)
+                    # Use the new method that handles both SVG and PNG
+                    self.convert_image_to_png(file_path, "tmp.png", target_width, target_height, custom_scale)
                     # Get actual dimensions of generated image
                     with Image.open("tmp.png") as img:
                         actual_width, actual_height = img.size
@@ -363,7 +379,7 @@ class SvgToBmpConverter:
         header_color = (45, 65, 95)  # Darker blue for section headers
 
         # First scan and collect information about all categories
-        category_files_map = self.scan_svg_files()
+        category_files_map = self.scan_image_files()
 
         print(f"Found {len(category_files_map)} categories with SVGs: {list(category_files_map.keys())}")
 
@@ -528,14 +544,19 @@ class SvgToBmpConverter:
                 print(f"Using custom scale {custom_scale} for {section['category']}/{section['label']}")
 
             for i, (orig_name, icon_key, array_name) in enumerate(section['icons']):
-                # Use the original file name to find the SVG
-                svg_file = os.path.join(self.svg_dir, section['category'], f"{orig_name}.svg")
+                # Find the file with supported extensions
+                found_file = None
+                for ext in self.supported_extensions:
+                    test_file = os.path.join(self.svg_dir, section['category'], f"{orig_name}{ext}")
+                    if os.path.exists(test_file):
+                        found_file = test_file
+                        break
 
-                if os.path.exists(svg_file):
+                if found_file:
                     # Generate the PNG temporarily
                     temp_png = f"temp_{orig_name}_{section['label']}.png"
-                    self.convert_svg_to_png(
-                        svg_file, temp_png,
+                    self.convert_image_to_png(
+                        found_file, temp_png,
                         section['target_width'], section['target_height'],
                         custom_scale
                     )
@@ -562,7 +583,7 @@ class SvgToBmpConverter:
                     except Exception as e:
                         print(f"Error processing icon {orig_name}: {e}")
                 else:
-                    print(f"Warning: SVG file not found: {svg_file}")
+                    print(f"Warning: No image file found for {orig_name} in {section['category']}")
 
                 # Move to next position
                 x += section['target_width'] + 20
@@ -652,3 +673,4 @@ if __name__ == "__main__":
     )
     converter.convert_and_save()
     print("\nGenerated weatherIcons.h with category-specific size configurations")
+    print("Supported file formats: SVG, PNG")
