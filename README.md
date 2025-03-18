@@ -52,7 +52,9 @@ The weather data is fetched from the [OpenWeatherMap](https://openweathermap.org
 # Credits
 - Icons:
   - [Weather Icons](https://erikflowers.github.io/weather-icons/)
+  Weather Icons licensed under SIL OFL 1.1
   The Weather Icons project created and maintained by Erik Flowers. v1.0 artwork by Lukas Bischoff. v1.1 - 2.0 artwork by Erik Flowers
+
 
 - 8px font:
 Copyright (c) YUJI OSHIMOTO.
