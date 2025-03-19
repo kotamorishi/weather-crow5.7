@@ -99,8 +99,12 @@ private:
       delay(300);
       logPrint(".");
     }
-    // Restore CPU frequency to 240MHz for faster WiFi connection
-    setCpuFrequencyMhz(240);
+
+    if (LOW_POWER_MODE)
+    {
+      // Restore CPU frequency to 240MHz for faster WiFi connection
+      setCpuFrequencyMhz(240);
+    }
 
     if (WiFi.status() != WL_CONNECTED)
     {
@@ -342,7 +346,7 @@ private:
       unsigned long startTime = millis();
       while (httpResponseCode < 0 && (millis() - startTime) < HTTP_TIMEOUT_MS)
       {
-        delay(100);
+        delay(500);
       }
 
       // Check if timeout occurred or non-success status code
@@ -371,8 +375,11 @@ private:
         return false; // Don't retry for other error codes
       }
 
-      // Turn off wireless as soon as possible.
-      wirelessOff();
+      if (LOW_POWER_MODE)
+      {
+        // Turn off wireless as soon as possible.
+        wirelessOff();
+      }
 
       // Parse JSON response
       DeserializationError error = deserializeJson(weatherApiResponse, jsonBuffer);
@@ -752,7 +759,10 @@ private:
     drawWeatherFutureForecast(270, 160, 5);
 
     // clock frequency is reduced to 80MHz to save power
-    setCpuFrequencyMhz(80);
+    if (LOW_POWER_MODE)
+    {
+      setCpuFrequencyMhz(80);
+    }
 
     // Update display
     EPD_Display(imageBW);
@@ -967,8 +977,12 @@ WeatherCrow weatherCrow;
 
 void setup()
 {
-  setCpuFrequencyMhz(80);
-  btStop(); // Disable Bluetooth, as it is not used in this project
+
+  if (LOW_POWER_MODE)
+  {
+    setCpuFrequencyMhz(80);
+    btStop(); // Disable Bluetooth, as it is not used in this project
+  }
   weatherCrow.begin();
 }
 

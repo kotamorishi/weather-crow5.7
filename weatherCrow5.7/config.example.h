@@ -30,3 +30,6 @@
 
 // Forecast hour interval (min:1 to max:8)
 #define HOUR_INTERVAL 3
+
+// Low power mode, when you powring the device with battery set to true
+#define LOW_POWER_MODE false
