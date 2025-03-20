@@ -423,11 +423,12 @@ private:
     snprintf(buffer, sizeof(buffer), "%s_sm", icon.c_str());
     if (icon_map.count(buffer) > 0)
     {
-      EPD_drawImage(x, y, icon_map[buffer]);
+      EPD_drawImage(x + 2, y, icon_map[buffer]);
     }
     else
     {
-      EPD_drawImage(x, y, icon_map["leo_face_sm"]);
+      // default fallback icon
+      EPD_drawImage(x + 2, y, icon_map["error_sm"]);
     }
 
     // Time formatting (10 AM, 9 PM, etc.)
@@ -508,7 +509,7 @@ private:
       drawForecastItem(x, y, hourly);
 
       // Offset for the next forecast item
-      x = x + 105;
+      x = x + 107;
     }
   }
 
@@ -844,7 +845,6 @@ private:
 
     EPD_drawImage(350, 0, icon_map["leo_face_lg"]);
     EPD_drawImage(550, 0, icon_map["leo_gator_lg"]);
-
 
     char buffer[STRING_BUFFER_SIZE];
     memset(buffer, 0, sizeof(buffer));
