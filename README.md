@@ -8,9 +8,9 @@ It is a weather station that displays the current weather and forecast for the n
 The weather data is fetched from the [OpenWeatherMap](https://openweathermap.org/) API.
 
 # What you need
-- [CrowPanel ESP32 E-Paper HMI 5.79-inch Display](https://www.elecrow.com/crowpanel-esp32-5-79-e-paper-hmi-display-with-272-792-resolution-black-white-color-driven-by-spi-interface.html)
-- [OpenWeatherMap API key](https://openweathermap.org/)
-- [Arduino IDE > 2.3.4](https://www.arduino.cc/en/software)
+- Hardware : [CrowPanel ESP32 E-Paper HMI 5.79-inch Display](https://www.elecrow.com/crowpanel-esp32-5-79-e-paper-hmi-display-with-272-792-resolution-black-white-color-driven-by-spi-interface.html)
+- API Key : [OpenWeatherMap API key](https://openweathermap.org/)
+- Software : [Arduino IDE > 2.3.4](https://www.arduino.cc/en/software)
 
 # Setup the environment
 1. Install the ESP32 board in Arduino IDE
