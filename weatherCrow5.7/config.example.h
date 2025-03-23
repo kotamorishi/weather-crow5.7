@@ -14,9 +14,17 @@
 #define LATITUDE "20.4255911"
 #define LONGITUDE "136.0809294"
 
-// kyoto
+// Tokyo station
+// #define LATITUDE "35.68"
+// #define LONGITUDE "139.75"
+
+// Kyoto
 // #define LATITUDE "35.09"
 // #define LONGITUDE "135.55"
+
+// New York
+// #define LATITUDE "40.75"
+// #define LONGITUDE "-73.98"
 
 
 // Refresh rate for the weather data in minuites (min:1)
