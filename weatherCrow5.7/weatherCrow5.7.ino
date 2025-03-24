@@ -993,8 +993,10 @@ void loop()
   if (weatherCrow.run() == true)
   {
     Serial.println("weatherCrow.run() completed successfully");
-    // success wait for the next refresh
-    esp_sleep_enable_timer_wakeup(1000000ULL * 60ULL * REFRESH_MINUITES);
+    uint64_t minSleepDuration = 1000000ULL * 60ULL * 10; // 10 minutes
+    uint64_t requestedSleepDuration = 1000000ULL * 60ULL * REFRESH_MINUTES;
+    uint64_t sleepDuration = (requestedSleepDuration < minSleepDuration) ? minSleepDuration : requestedSleepDuration;
+    esp_sleep_enable_timer_wakeup(sleepDuation);
     esp_deep_sleep_start();
   }
   else
