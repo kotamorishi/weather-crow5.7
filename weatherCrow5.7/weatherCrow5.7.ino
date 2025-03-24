@@ -1,11 +1,12 @@
 #include "config.h"
+#include <esp_sleep.h>
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
+#include <sys/time.h>
 #include "EPD.h"
 #include "weatherIcons.h"
-#include <esp_sleep.h>
 
 // Communication and data constants
 #define BAUD_RATE 115200
@@ -280,6 +281,13 @@ private:
            "&units=" + UNITS;
   }
 
+  void setRTC(long unixTime)
+  {
+    // Set RTC to set current time (if RTC is available)
+    struct timeval now = { .tv_sec = unixTime, .tv_usec = 0 };
+    settimeofday(&now, NULL);
+  }
+
   /**
    * Processes the weather data from the API response
    */
@@ -296,6 +304,9 @@ private:
     weatherInfo.pressure = String(weatherApiResponse["current"]["pressure"].as<int>());
     weatherInfo.windSpeed = String(weatherApiResponse["current"]["wind_speed"].as<float>(), 1);
     weatherInfo.timezone = weatherApiResponse["timezone"].as<String>();
+
+    // set RTC to set current time (if RTC is available)
+    setRTC(weatherInfo.currentDateTime);
 
     // Process temperature for display
     int decimalPos = weatherInfo.temperature.indexOf('.');
@@ -996,7 +1007,7 @@ void loop()
     uint64_t minSleepDuration = 1000000ULL * 60ULL * 10; // 10 minutes
     uint64_t requestedSleepDuration = 1000000ULL * 60ULL * REFRESH_MINUTES;
     uint64_t sleepDuration = (requestedSleepDuration < minSleepDuration) ? minSleepDuration : requestedSleepDuration;
-    esp_sleep_enable_timer_wakeup(sleepDuation);
+    esp_sleep_enable_timer_wakeup(sleepDuration);
     esp_deep_sleep_start();
   }
   else

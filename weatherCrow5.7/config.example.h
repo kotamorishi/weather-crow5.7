@@ -27,8 +27,8 @@
 // #define LONGITUDE "-73.98"
 
 
-// Refresh rate for the weather data in minuites (min:1)
-#define REFRESH_MINUITES 60
+// Refresh rate for the weather data in minutes (min:10)
+#define REFRESH_MINUTES 60
 
 // location name
 #define LOCATION_NAME "Toronto"
