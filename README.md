@@ -50,6 +50,9 @@ The weather data is fetched from the [OpenWeatherMap](https://openweathermap.org
 
 
 # Credits
+- Weather data:
+  Weather data provided by [OpenWeather](https://openweathermap.org/)
+
 - Icons:
   - [Weather Icons](https://erikflowers.github.io/weather-icons/)
   Weather Icons licensed under SIL OFL 1.1
