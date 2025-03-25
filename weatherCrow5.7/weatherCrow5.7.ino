@@ -19,6 +19,9 @@
 #define UVI_DISPLAY_THRESHOLD 4.0
 #define WIND_SPEED_DISPLAY_THRESHOLD 4.0
 
+// LED
+#define PWR_LED_PIN 41
+
 class WeatherCrow
 {
 private:
@@ -37,6 +40,7 @@ private:
   String errorMessageBuffer;
   int httpResponseCode = HTTP_NOT_REQUESTED_YET;
   DynamicJsonDocument weatherApiResponse = DynamicJsonDocument(JSON_CAPACITY);
+  bool ledState = false;
 
   /**
    * Weather information structure to store processed data from API
@@ -99,6 +103,7 @@ private:
     {
       delay(300);
       logPrint(".");
+      ledToggle();
     }
 
     if (LOW_POWER_MODE)
@@ -269,9 +274,6 @@ private:
     EPD_DeepSleep();
   }
 
-  /**
-   * Constructs API endpoint URL and returns it
-   */
   String constructApiEndpointUrl()
   {
     return "https://api.openweathermap.org/data/3.0/onecall?lat=" +
@@ -283,7 +285,8 @@ private:
 
   void setRTC(long unixTime)
   {
-    // Set RTC to set current time (if RTC is available)
+    if(unixTime == 0) return;
+
     struct timeval now = { .tv_sec = unixTime, .tv_usec = 0 };
     settimeofday(&now, NULL);
   }
@@ -358,7 +361,9 @@ private:
       while (httpResponseCode < 0 && (millis() - startTime) < HTTP_TIMEOUT_MS)
       {
         delay(500);
+        ledToggle();
       }
+      ledOn();
 
       // Check if timeout occurred or non-success status code
       if (httpResponseCode < 0)
@@ -776,6 +781,7 @@ private:
       setCpuFrequencyMhz(80);
     }
 
+    ledOff();
     // Update display
     EPD_Display(imageBW);
     EPD_PartUpdate();
@@ -934,7 +940,87 @@ private:
 
   static const uint8_t MAX_WEATHER_API_RETRIES = 3;
 
+  /**
+   * Calculates the sleep duration based on regular refresh time and time until midnight
+   * @return sleep duration in microseconds
+   */
+  uint64_t calculateSleepDuration()
+  {
+    // Standard refresh time calculation
+    uint64_t minSleepDuration = 1000000ULL * 60ULL * 10; // 10 minutes
+    uint64_t requestedSleepDuration = 1000000ULL * 60ULL * REFRESH_MINUTES;
+    uint64_t regularSleepDuration = (requestedSleepDuration < minSleepDuration) ? minSleepDuration : requestedSleepDuration;
+
+    // Get current time from RTC
+    struct tm timeinfo;
+    if (getLocalTime(&timeinfo)) {
+      // Calculate time until next date change (midnight)
+      int seconds_to_midnight = (23 - timeinfo.tm_hour) * 3600 +
+                               (59 - timeinfo.tm_min) * 60 +
+                               (60 - timeinfo.tm_sec);
+
+      // Add 30 seconds delay after midnight
+      uint64_t timeToNextDateChange = (seconds_to_midnight + 30) * 1000000ULL;
+
+      // Choose the shorter time between date change and regular refresh
+      uint64_t sleepDuration = (timeToNextDateChange < regularSleepDuration) ?
+                              timeToNextDateChange : regularSleepDuration;
+
+      // Print current date and time in yyyy-mm-dd hh:mm:ss format
+      char currentTimeBuffer[30];
+      strftime(currentTimeBuffer, sizeof(currentTimeBuffer), "%Y-%m-%d %H:%M:%S", &timeinfo);
+      Serial.print("Current date and time: ");
+      Serial.println(currentTimeBuffer);
+
+      Serial.print("Time to midnight: ");
+      Serial.print(seconds_to_midnight);
+      Serial.println(" seconds");
+
+      Serial.print("Sleep duration: ");
+      Serial.print((uint32_t)(sleepDuration / 1000000ULL));
+      Serial.println(" seconds");
+
+      return sleepDuration;
+    } else {
+      // If we can't get the time, use the regular sleep duration
+      Serial.println("Failed to get RTC time, using regular sleep duration");
+      return regularSleepDuration;
+    }
+  }
+
+  void ledToggle(){
+    if(LOW_POWER_MODE) return;
+
+    if(ledState){
+      digitalWrite(PWR_LED_PIN, LOW);
+      ledState = false;
+    } else {
+      digitalWrite(PWR_LED_PIN, HIGH);
+      ledState = true;
+    }
+  }
+
+  void ledOff(){
+    if(LOW_POWER_MODE) return;
+
+    digitalWrite(PWR_LED_PIN, LOW);
+    ledState = false;
+  }
+
+  void ledOn(){
+    if(LOW_POWER_MODE) return;
+
+    digitalWrite(PWR_LED_PIN, HIGH);
+    ledState = true;
+  }
+
 public:
+
+  uint64_t getSleepDuration()
+  {
+    return calculateSleepDuration();
+  }
+
   void begin()
   {
     errorMessageBuffer = "";
@@ -942,6 +1028,12 @@ public:
     Serial.begin(BAUD_RATE);
     screenPowerOn();
     EPD_GPIOInit();
+    if(LOW_POWER_MODE == false)
+    {
+      // when not in low power mode, set output to avoid leakage current.
+      pinMode(PWR_LED_PIN, OUTPUT);
+    }
+
   }
 
   bool run()
@@ -954,6 +1046,8 @@ public:
       // displayCustomFontTest();
       // displayMonsterIconsTest();
       // delay(500000);
+
+      ledOn();
 
       connectToWiFi();
 
@@ -1004,9 +1098,7 @@ void loop()
   if (weatherCrow.run() == true)
   {
     Serial.println("weatherCrow.run() completed successfully");
-    uint64_t minSleepDuration = 1000000ULL * 60ULL * 10; // 10 minutes
-    uint64_t requestedSleepDuration = 1000000ULL * 60ULL * REFRESH_MINUTES;
-    uint64_t sleepDuration = (requestedSleepDuration < minSleepDuration) ? minSleepDuration : requestedSleepDuration;
+    uint64_t sleepDuration = weatherCrow.getSleepDuration();
     esp_sleep_enable_timer_wakeup(sleepDuration);
     esp_deep_sleep_start();
   }
