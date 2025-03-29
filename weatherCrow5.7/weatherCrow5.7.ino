@@ -138,6 +138,33 @@ private:
   }
 
   /**
+   * Safely retrieves an icon from the icon map, returning a fallback if not found
+   * @param iconKey The key to look up in icon_map
+   * @param fallbackKey Optional fallback key if the main key is not found (defaults to "error_sm")
+   * @return Reference to the icon data, or fallback icon if not found
+   */
+  const unsigned char* getIcon(const char* iconKey, const char* fallbackKey = "na_md") {
+    // First check if the requested icon exists
+    if (icon_map.count(iconKey) > 0) {
+      return icon_map[iconKey];
+    }
+
+    // If not found, try to use the fallback
+    if (icon_map.count(fallbackKey) > 0) {
+      Serial.print("Icon not found: ");
+      Serial.print(iconKey);
+      Serial.print(", using fallback: ");
+      Serial.println(fallbackKey);
+      return icon_map[fallbackKey];
+    }
+
+    // If even fallback isn't available, return the first available icon
+    Serial.print("Neither requested icon nor fallback found: ");
+    Serial.println(iconKey);
+    return icon_map.begin()->second;
+  }
+
+  /**
    * Displays system information on the screen
    */
   void displaySystemInfo(uint16_t baseX, uint16_t baseY)
@@ -248,11 +275,13 @@ private:
     uint16_t baseXpos = 258;
     char buffer[STRING_BUFFER_SIZE];
 
-    // Display error icon
-    // randomly draw icon
+    // Display error icon - with safety check
     const char *icons[] = {"emma_cupcake_lg", "emma_mon1_lg", "leo_face_lg", "leo_gator_lg"};
     int randomIndex = random(0, sizeof(icons) / sizeof(icons[0]));
-    EPD_drawImage(30, 20, icon_map[icons[randomIndex]]);
+    const char* selectedIcon = icons[randomIndex];
+
+    // Safely get the icon
+    EPD_drawImage(30, 20, getIcon(selectedIcon));
     EPD_DrawLine(baseXpos, 110, 740, 110, BLACK);
 
     // Display error title
@@ -437,15 +466,7 @@ private:
     }
 
     snprintf(buffer, sizeof(buffer), "%s_sm", icon.c_str());
-    if (icon_map.count(buffer) > 0)
-    {
-      EPD_drawImage(x + 2, y, icon_map[buffer]);
-    }
-    else
-    {
-      // default fallback icon
-      EPD_drawImage(x + 2, y, icon_map["error_sm"]);
-    }
+    EPD_drawImage(x + 2, y, getIcon(buffer));
 
     // Time formatting (10 AM, 9 PM, etc.)
     long forecastTimeInt = hourlyData["dt"].as<long>() + weatherApiResponse["timezone_offset"].as<long>();
@@ -767,7 +788,7 @@ private:
 
     // Display weather icon
     String iconName = "icon_" + weatherInfo.icon + "_lg";
-    EPD_drawImage(10, 1, icon_map[iconName.c_str()]);
+    EPD_drawImage(10, 1, getIcon(iconName.c_str()));
 
     // Display current info (pressure, humidity, etc.)
     displayCurrentInfo(380, 30);
@@ -857,20 +878,16 @@ private:
 
     int ypos = 0;
 
-    EPD_drawImage(0, 0, icon_map["emma_cupcake_lg"]);
-    EPD_drawImage(170, 0, icon_map["emma_mon1_lg"]);
-
-    EPD_drawImage(350, 0, icon_map["leo_face_lg"]);
-    EPD_drawImage(550, 0, icon_map["leo_gator_lg"]);
+    // Use safe icon retrieval for all icons
+    EPD_drawImage(0, 0, getIcon("emma_cupcake_lg"));
+    EPD_drawImage(170, 0, getIcon("emma_mon1_lg"));
+    EPD_drawImage(350, 0, getIcon("leo_face_lg"));
+    EPD_drawImage(550, 0, getIcon("leo_gator_lg"));
 
     char buffer[STRING_BUFFER_SIZE];
     memset(buffer, 0, sizeof(buffer));
     snprintf(buffer, sizeof(buffer), "Included monster icons too!");
     EPD_ShowStringRightAligned(790, 250, buffer, FONT_SIZE_36, BLACK);
-
-    // memset(buffer, 0, sizeof(buffer));
-    // snprintf(buffer, sizeof(buffer), "Build-in small and large");
-    // EPD_ShowString(100, 178, buffer, FONT_SIZE_38, BLACK, true);
 
     // Update display
     EPD_Display(imageBW);
@@ -884,25 +901,25 @@ private:
 
     int ypos = 0;
 
-    // EPD_drawImage(0, 100, leo_face_lg);
-    EPD_drawImage(0, ypos, icon_map["icon_01d_sm"]);
-    EPD_drawImage(60, ypos, icon_map["icon_01n_sm"]);
-    EPD_drawImage(120, ypos, icon_map["icon_02d_sm"]);
-    EPD_drawImage(180, ypos, icon_map["icon_02n_sm"]);
-    EPD_drawImage(240, ypos, icon_map["icon_03d_sm"]);
-    EPD_drawImage(300, ypos, icon_map["icon_03n_sm"]);
-    EPD_drawImage(360, ypos, icon_map["icon_04d_sm"]);
-    EPD_drawImage(420, ypos, icon_map["icon_04n_sm"]);
-    EPD_drawImage(480, ypos, icon_map["icon_09d_sm"]);
-    EPD_drawImage(540, ypos, icon_map["icon_09n_sm"]);
-    EPD_drawImage(600, ypos, icon_map["icon_10d_sm"]);
-    EPD_drawImage(660, ypos, icon_map["icon_10n_sm"]);
-    EPD_drawImage(720, ypos, icon_map["icon_11d_sm"]);
+    // Update all icon accesses to use getSafeIcon
+    EPD_drawImage(0, ypos, getIcon("icon_01d_sm"));
+    EPD_drawImage(60, ypos, getIcon("icon_01n_sm"));
+    EPD_drawImage(120, ypos, getIcon("icon_02d_sm"));
+    EPD_drawImage(180, ypos, getIcon("icon_02n_sm"));
+    EPD_drawImage(240, ypos, getIcon("icon_03d_sm"));
+    EPD_drawImage(300, ypos, getIcon("icon_03n_sm"));
+    EPD_drawImage(360, ypos, getIcon("icon_04d_sm"));
+    EPD_drawImage(420, ypos, getIcon("icon_04n_sm"));
+    EPD_drawImage(480, ypos, getIcon("icon_09d_sm"));
+    EPD_drawImage(540, ypos, getIcon("icon_09n_sm"));
+    EPD_drawImage(600, ypos, getIcon("icon_10d_sm"));
+    EPD_drawImage(660, ypos, getIcon("icon_10n_sm"));
+    EPD_drawImage(720, ypos, getIcon("icon_11d_sm"));
 
     ypos = 60;
-    EPD_drawImage(0, ypos, icon_map["icon_11n_sm"]);
-    EPD_drawImage(60, ypos, icon_map["icon_13d_sm"]);
-    EPD_drawImage(120, ypos, icon_map["icon_13n_sm"]);
+    EPD_drawImage(0, ypos, getIcon("icon_11n_sm"));
+    EPD_drawImage(60, ypos, getIcon("icon_13d_sm"));
+    EPD_drawImage(120, ypos, getIcon("icon_13n_sm"));
 
     const char *icons[] = {
         "wind_sm", "raindrop_sm", "sunrise_sm", "snow_sm", "dust_sm",
@@ -910,11 +927,11 @@ private:
 
     for (int i = 0; i < sizeof(icons) / sizeof(icons[0]); ++i)
     {
-      EPD_drawImage(200 + i * 30, ypos, icon_map[icons[i]]);
+      EPD_drawImage(200 + i * 30, ypos, getIcon(icons[i]));
     }
 
-    EPD_drawImage(550, 15, icon_map["icon_04n_lg"]);
-    EPD_drawImage(0, 200, icon_map["error_sm"]);
+    EPD_drawImage(550, 15, getIcon("icon_04n_lg"));
+    EPD_drawImage(0, 200, getIcon("error_sm"));
 
     char buffer[STRING_BUFFER_SIZE];
     memset(buffer, 0, sizeof(buffer));
