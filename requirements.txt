@@ -1,0 +1,4 @@
+# Python dependencies for weather-crow5.7 tools
+Pillow>=9.0.0  # Used for image processing in both scripts
+cairosvg>=2.5.0  # Used for SVG to PNG conversion in svgToBmp.py
+fonttools>=4.25.0  # Used for font processing in ttfToEPD.py
