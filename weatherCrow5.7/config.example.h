@@ -41,3 +41,6 @@
 
 // Low power mode, when you powring the device with battery set to true
 #define LOW_POWER_MODE false
+
+// alert display
+#define ENABLE_ALERT_DISPLAY true

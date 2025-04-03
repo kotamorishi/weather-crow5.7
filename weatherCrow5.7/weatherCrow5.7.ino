@@ -143,14 +143,17 @@ private:
    * @param fallbackKey Optional fallback key if the main key is not found (defaults to "error_sm")
    * @return Reference to the icon data, or fallback icon if not found
    */
-  const unsigned char* getIcon(const char* iconKey, const char* fallbackKey = "na_md") {
+  const unsigned char* getIcon(const char *iconKey, const char* fallbackKey = "na_md")
+  {
     // First check if the requested icon exists
-    if (icon_map.count(iconKey) > 0) {
+    if (icon_map.count(iconKey) > 0)
+    {
       return icon_map[iconKey];
     }
 
     // If not found, try to use the fallback
-    if (icon_map.count(fallbackKey) > 0) {
+    if (icon_map.count(fallbackKey) > 0)
+    {
       Serial.print("Icon not found: ");
       Serial.print(iconKey);
       Serial.print(", using fallback: ");
@@ -224,6 +227,24 @@ private:
   }
 
   /**
+   * Converts Unix timestamp to specified formatted date-time string
+   */
+  String convertUnixTimeToSpecifiedDateTimeString(long unixTime, const char *format)
+  {
+    if (unixTime == 0)
+    {
+      return "N/A";
+    }
+
+    time_t rawtime = unixTime;
+    struct tm *dt;
+    char buffer[30];
+    dt = gmtime(&rawtime);
+    strftime(buffer, sizeof(buffer), format, dt);
+    return String(buffer);
+  }
+
+  /**
    * Converts Unix timestamp to short time format (hour with AM/PM)
    */
   String convertUnixTimeToShortDateTimeString(long unixTime)
@@ -278,7 +299,7 @@ private:
     // Display error icon - with safety check
     const char *icons[] = {"emma_cupcake_lg", "emma_mon1_lg", "leo_face_lg", "leo_gator_lg"};
     int randomIndex = random(0, sizeof(icons) / sizeof(icons[0]));
-    const char* selectedIcon = icons[randomIndex];
+    const char *selectedIcon = icons[randomIndex];
 
     // Safely get the icon
     EPD_drawImage(30, 20, getIcon(selectedIcon));
@@ -314,9 +335,10 @@ private:
 
   void setRTC(long unixTime)
   {
-    if(unixTime == 0) return;
+    if (unixTime == 0)
+      return;
 
-    struct timeval now = { .tv_sec = unixTime, .tv_usec = 0 };
+    struct timeval now = {.tv_sec = unixTime, .tv_usec = 0};
     settimeofday(&now, NULL);
   }
 
@@ -508,8 +530,8 @@ private:
     if (!weatherApiResponse.containsKey("hourly"))
     {
       memset(buffer, 0, sizeof(buffer));
-      snprintf(buffer, sizeof(buffer), "%s", "Error: API not responding with hourly data.");
-      EPD_ShowString(x, y, buffer, FONT_SIZE_16, BLACK, true);
+      snprintf(buffer, sizeof(buffer), "%s", "Error: API not responding with hourly forecast data.");
+      EPD_ShowString(x, y + 60, buffer, FONT_SIZE_16, BLACK, true);
       return;
     }
 
@@ -699,9 +721,87 @@ private:
     snprintf(buffer, sizeof(buffer), "%%RH");
     EPD_ShowString(centerX + unitOffsetX, y + unitOffsetY, buffer, FONT_SIZE_16, BLACK, false);
 
-    // Snow, rain, UVI, or wind speed
+    // Alert, Snow, rain, UVI, or wind speed
     y += 40;
     displayAdditionalInfoLine(centerX, y, unitOffsetX, unitOffsetY);
+  }
+
+  /**
+   * Displays weather alerts information
+   * @param baseX X position for alert display
+   * @param baseY Y position for alert display
+   * @return true if alerts were displayed, false otherwise
+   */
+  bool displayAlerts(uint16_t baseX, uint16_t baseY)
+  {
+    uint16_t x = baseX;
+    uint16_t y = baseY;
+    char buffer[STRING_BUFFER_SIZE];
+
+    // Get the first/most recent alert
+    JsonObject alert = weatherApiResponse["alerts"][0];
+
+    // Display alert icon
+    EPD_drawImage(x, y + 5, getIcon("warning_sm", "na_md"));
+
+    y += 30;
+    x += 75;
+
+    // Display event type
+    if (alert.containsKey("event"))
+    {
+      String event = alert["event"].as<String>();
+      event[0] = toupper(event[0]);
+      memset(buffer, 0, sizeof(buffer));
+      snprintf(buffer, sizeof(buffer), "%s", event.c_str());
+      EPD_ShowString(x - 10, y - 5, buffer, FONT_SIZE_36, BLACK, true);
+      y += 45;
+    }
+
+    if (alert.containsKey("sender_name") && alert.containsKey("start") && alert.containsKey("end"))
+    {
+      String senderName = alert["sender_name"].as<String>();
+      long startTime = alert["start"].as<long>();
+      long endTime = alert["end"].as<long>();
+
+      String startTimeStr = convertUnixTimeToShortDateTimeString(startTime);
+      String startStr = convertUnixTimeToSpecifiedDateTimeString(startTime, "%a ") + startTimeStr;
+      String endTimeStr = convertUnixTimeToShortDateTimeString(endTime);
+      String endStr = convertUnixTimeToSpecifiedDateTimeString(endTime, "%a ") + endTimeStr;
+
+      // check if startTime and EndTime are the same day, we don't need to put %a twice
+      if (startStr.substring(0, 3) == endStr.substring(0, 3))
+      {
+        endStr = endStr.substring(4);
+      }
+
+      memset(buffer, 0, sizeof(buffer));
+      snprintf(buffer, sizeof(buffer), "%s to %s %s", startStr.c_str(), endStr.c_str(), senderName.c_str());
+      EPD_ShowString(x - 60, y, buffer, FONT_SIZE_16, BLACK, true);
+      y += 25;
+    }
+
+    if (alert.containsKey("description"))
+    {
+      String desc = alert["description"].as<String>();
+      // extract the first line
+      int lineBreakIndex = desc.indexOf('\n');
+      if (lineBreakIndex != -1)
+      {
+        desc = desc.substring(0, lineBreakIndex);
+      }
+
+      if (desc.length() > STRING_BUFFER_SIZE - 5)
+      {
+        desc = desc.substring(0, STRING_BUFFER_SIZE - 5) + "...";
+      }
+
+      memset(buffer, 0, sizeof(buffer));
+      snprintf(buffer, sizeof(buffer), "%s", desc.c_str());
+      EPD_ShowString(x - 60, y, buffer, FONT_SIZE_16, BLACK, false);
+    }
+
+    return true;
   }
 
   void displayAdditionalInfoLine(uint16_t centerX, uint16_t y, uint16_t unitOffsetX, uint16_t unitOffsetY)
@@ -757,6 +857,43 @@ private:
     }
   }
 
+  void displayTemperature(uint16_t x, uint16_t y, bool isLarge){
+    char buffer[STRING_BUFFER_SIZE];
+    memset(buffer, 0, sizeof(buffer));
+    if(isLarge) {
+      snprintf(buffer, sizeof(buffer), "%s", weatherInfo.tempIntegerPart.c_str());
+      EPD_ShowStringRightAligned(x, y, buffer, FONT_SIZE_92, BLACK);
+      memset(buffer, 0, sizeof(buffer));
+      if (UNITS == "metric")
+      {
+        snprintf(buffer, sizeof(buffer), "C");
+        EPD_drawImage(x, y, degrees_lg);
+      }
+      else
+      {
+        snprintf(buffer, sizeof(buffer), "F");
+      }
+      EPD_ShowString(x + 10, y + 24, buffer, FONT_SIZE_36, BLACK);
+    }
+    else
+    {
+      if (UNITS == "metric")
+      {
+        snprintf(buffer, sizeof(buffer), "C");
+        EPD_drawImage(x - 2, y - 20, degrees_lg);
+      }
+      else
+      {
+        snprintf(buffer, sizeof(buffer), "F");
+      }
+      EPD_ShowString(x + 12, y, buffer, FONT_SIZE_36, BLACK);
+
+      snprintf(buffer, sizeof(buffer), "%s", weatherInfo.tempIntegerPart.c_str());
+      EPD_ShowStringRightAligned(x, y, buffer, FONT_SIZE_36, BLACK);
+
+    }
+  }
+
   void displayWeatherForecast()
   {
     clearScreen();
@@ -767,31 +904,19 @@ private:
     snprintf(buffer, sizeof(buffer), "%s ", convertUnixTimeToDisplayFormat(weatherInfo.currentDateTime).c_str());
     EPD_ShowStringRightAligned(790, 25, buffer, FONT_SIZE_36, BLACK);
 
-    // Display temperature
-    uint16_t yPos = 105;
-    memset(buffer, 0, sizeof(buffer));
-    snprintf(buffer, sizeof(buffer), "%s", weatherInfo.tempIntegerPart.c_str());
-    EPD_ShowStringRightAligned(740, yPos, buffer, FONT_SIZE_92, BLACK);
-
-    // Display temperature unit
-    memset(buffer, 0, sizeof(buffer));
-    if (UNITS == "metric")
-    {
-      snprintf(buffer, sizeof(buffer), "C");
-      EPD_drawImage(740, yPos, degrees_sm);
-    }
-    else
-    {
-      snprintf(buffer, sizeof(buffer), "F");
-    }
-    EPD_ShowString(750, yPos + 24, buffer, FONT_SIZE_36, BLACK);
-
     // Display weather icon
     String iconName = "icon_" + weatherInfo.icon + "_lg";
     EPD_drawImage(10, 1, getIcon(iconName.c_str()));
 
-    // Display current info (pressure, humidity, etc.)
-    displayCurrentInfo(380, 30);
+    if (weatherApiResponse.containsKey("alerts") && weatherApiResponse["alerts"].size() > 0)
+    {
+      displayAlerts(270, 0);
+      displayTemperature(740, 70, false);
+    }
+    else{
+      displayCurrentInfo(380, 30);
+      displayTemperature(740, 105, true);
+    }
 
     // Display future forecast
     drawWeatherFutureForecast(270, 160, 5);
@@ -958,7 +1083,8 @@ private:
   static const uint8_t MAX_WEATHER_API_RETRIES = 3;
 
   /**
-   * Calculates the sleep duration based on regular refresh time and time until midnight
+   * Calculates the sleep duration based on regular refresh time, time until midnight,
+   * and alert start/end times
    * @return sleep duration in microseconds
    */
   uint64_t calculateSleepDuration()
@@ -968,20 +1094,77 @@ private:
     uint64_t requestedSleepDuration = 1000000ULL * 60ULL * REFRESH_MINUTES;
     uint64_t regularSleepDuration = (requestedSleepDuration < minSleepDuration) ? minSleepDuration : requestedSleepDuration;
 
+    // Default to regular sleep duration
+    uint64_t sleepDuration = regularSleepDuration;
+    String wakeReason = "Regular refresh interval";
+
     // Get current time from RTC
     struct tm timeinfo;
-    if (getLocalTime(&timeinfo)) {
+    if (getLocalTime(&timeinfo))
+    {
+      time_t currentTime = mktime(&timeinfo);
+
       // Calculate time until next date change (midnight)
       int seconds_to_midnight = (23 - timeinfo.tm_hour) * 3600 +
-                               (59 - timeinfo.tm_min) * 60 +
-                               (60 - timeinfo.tm_sec);
+                                (59 - timeinfo.tm_min) * 60 +
+                                (60 - timeinfo.tm_sec);
 
       // Add 30 seconds delay after midnight
       uint64_t timeToNextDateChange = (seconds_to_midnight + 30) * 1000000ULL;
 
-      // Choose the shorter time between date change and regular refresh
-      uint64_t sleepDuration = (timeToNextDateChange < regularSleepDuration) ?
-                              timeToNextDateChange : regularSleepDuration;
+      // Check if date change is sooner than regular refresh
+      if (timeToNextDateChange < sleepDuration)
+      {
+        sleepDuration = timeToNextDateChange;
+        wakeReason = "Date change (midnight + 30s)";
+      }
+
+      // Check for weather alerts
+      if (weatherApiResponse.containsKey("alerts") && weatherApiResponse["alerts"].size() > 0)
+      {
+        // Current time in unix timestamp
+        time_t now = currentTime;
+
+        // Iterate through alerts to find closest upcoming start or end time
+        for (size_t i = 0; i < weatherApiResponse["alerts"].size(); i++)
+        {
+          if (weatherApiResponse["alerts"][i].containsKey("start"))
+          {
+            time_t alertStartTime = weatherApiResponse["alerts"][i]["start"].as<long>();
+
+            // If alert starts in the future
+            if (alertStartTime > now)
+            {
+              uint64_t timeToAlertStart = (alertStartTime - now) * 1000000ULL;
+
+              // If this alert starts sooner than our current wake time
+              if (timeToAlertStart < sleepDuration)
+              {
+                sleepDuration = timeToAlertStart;
+                wakeReason = "Upcoming alert start";
+              }
+            }
+          }
+
+          if (weatherApiResponse["alerts"][i].containsKey("end"))
+          {
+            time_t alertEndTime = weatherApiResponse["alerts"][i]["end"].as<long>();
+
+            // If alert ends in the future
+            if (alertEndTime > now)
+            {
+              uint64_t timeToAlertEnd = (alertEndTime - now) * 1000000ULL;
+
+              // If this alert ends sooner than our current wake time
+              if (timeToAlertEnd < sleepDuration)
+              {
+                sleepDuration = timeToAlertEnd;
+                wakeReason = "Alert end time";
+              }
+            }
+          }
+        }
+      }
 
       // Print current date and time in yyyy-mm-dd hh:mm:ss format
       char currentTimeBuffer[30];
@@ -989,50 +1172,58 @@ private:
       Serial.print("Current date and time: ");
       Serial.println(currentTimeBuffer);
 
-      Serial.print("Time to midnight: ");
-      Serial.print(seconds_to_midnight);
-      Serial.println(" seconds");
-
       Serial.print("Sleep duration: ");
       Serial.print((uint32_t)(sleepDuration / 1000000ULL));
-      Serial.println(" seconds");
+      Serial.print(" seconds (");
+      Serial.print(wakeReason);
+      Serial.println(")");
 
       return sleepDuration;
-    } else {
+    }
+    else
+    {
       // If we can't get the time, use the regular sleep duration
       Serial.println("Failed to get RTC time, using regular sleep duration");
       return regularSleepDuration;
     }
   }
 
-  void ledToggle(){
-    if(LOW_POWER_MODE) return;
+  void ledToggle()
+  {
+    if (LOW_POWER_MODE)
+      return;
 
-    if(ledState){
+    if (ledState)
+    {
       digitalWrite(PWR_LED_PIN, LOW);
       ledState = false;
-    } else {
+    }
+    else
+    {
       digitalWrite(PWR_LED_PIN, HIGH);
       ledState = true;
     }
   }
 
-  void ledOff(){
-    if(LOW_POWER_MODE) return;
+  void ledOff()
+  {
+    if (LOW_POWER_MODE)
+      return;
 
     digitalWrite(PWR_LED_PIN, LOW);
     ledState = false;
   }
 
-  void ledOn(){
-    if(LOW_POWER_MODE) return;
+  void ledOn()
+  {
+    if (LOW_POWER_MODE)
+      return;
 
     digitalWrite(PWR_LED_PIN, HIGH);
     ledState = true;
   }
 
 public:
-
   uint64_t getSleepDuration()
   {
     return calculateSleepDuration();
@@ -1045,12 +1236,11 @@ public:
     Serial.begin(BAUD_RATE);
     screenPowerOn();
     EPD_GPIOInit();
-    if(LOW_POWER_MODE == false)
+    if (LOW_POWER_MODE == false)
     {
       // when not in low power mode, set output to avoid leakage current.
       pinMode(PWR_LED_PIN, OUTPUT);
     }
-
   }
 
   bool run()

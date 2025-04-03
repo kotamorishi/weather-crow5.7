@@ -13,7 +13,9 @@
     },
     {
       "category": "degree",
-      "sizes": [{ "width": 16, "label": "sm", "scale":1.85}]
+      "sizes": [
+        { "width": 16, "label": "sm", "scale":1.85}
+      ]
     },
     {
       "category": "md",
@@ -26,6 +28,10 @@
     {
       "category": "extraLarge",
       "sizes": [{ "width": 240, "label": "lg", "scale":0.25}]
+    },
+    {
+      "category": "warning",
+      "sizes": [{ "width": 45, "label": "sm", "scale":0.25}]
     }
   ],
   "threshold": 100
