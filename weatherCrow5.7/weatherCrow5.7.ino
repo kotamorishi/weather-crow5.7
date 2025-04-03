@@ -278,12 +278,35 @@ private:
       return "N/A";
     }
 
-    time_t rawtime = unixTime;
-    struct tm *dt;
     char buffer[30];
-    dt = gmtime(&rawtime);
-    strftime(buffer, sizeof(buffer), "%b %d, %a", dt);
+    String monthStr = convertUnixTimeToSpecifiedDateTimeString(unixTime, "%b");
+    String dayStr = convertUnixTimeToSpecifiedDateTimeString(unixTime, "%d");
+    dayStr = formatDay(dayStr); // Format day with suffix
+    String weekOfDayStr = convertUnixTimeToSpecifiedDateTimeString(unixTime, "%a");
+    snprintf(buffer, sizeof(buffer), "%s %s, %s", monthStr.c_str(), dayStr.c_str(), weekOfDayStr.c_str());
     return String(buffer);
+  }
+
+  /**
+   * Formats a date string by removing leading zeros and adding suffix for 1st, 2nd, 3rd days
+   * @param dateStr Date string (e.g., "01", "08")
+   * @return Formatted date string (e.g., "1st", "2nd", "3rd", "4", "5", etc.)
+   */
+  String formatDay(String dateStr) {
+    // Convert to integer to remove leading zeros
+    int day = dateStr.toInt();
+
+    // Add appropriate suffix based on day number
+    if (day == 1 || day == 21 || day == 31) {
+      return String(day) + "st";
+    } else if (day == 2 || day == 22) {
+      return String(day) + "nd";
+    } else if (day == 3 || day == 23) {
+      return String(day) + "rd";
+    } else {
+      // For all other days (4-20, 24-30), just return the number
+      return String(day);
+    }
   }
 
   /**
