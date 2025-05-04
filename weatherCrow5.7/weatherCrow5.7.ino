@@ -143,7 +143,7 @@ private:
    * @param fallbackKey Optional fallback key if the main key is not found (defaults to "error_sm")
    * @return Reference to the icon data, or fallback icon if not found
    */
-  const unsigned char* getIcon(const char *iconKey, const char* fallbackKey = "na_md")
+  const unsigned char *getIcon(const char *iconKey, const char *fallbackKey = "na_md")
   {
     // First check if the requested icon exists
     if (icon_map.count(iconKey) > 0)
@@ -281,7 +281,7 @@ private:
     char buffer[30];
     String monthStr = convertUnixTimeToSpecifiedDateTimeString(unixTime, "%b");
     String dayStr = convertUnixTimeToSpecifiedDateTimeString(unixTime, "%d");
-    dayStr = formatDay(dayStr); // Format day with suffix
+    dayStr = formatDay(dayStr);
     String weekOfDayStr = convertUnixTimeToSpecifiedDateTimeString(unixTime, "%a");
     snprintf(buffer, sizeof(buffer), "%s %s, %s", monthStr.c_str(), dayStr.c_str(), weekOfDayStr.c_str());
     return String(buffer);
@@ -290,23 +290,12 @@ private:
   /**
    * Formats a date string by removing leading zeros and adding suffix for 1st, 2nd, 3rd days
    * @param dateStr Date string (e.g., "01", "08")
-   * @return Formatted date string (e.g., "1st", "2nd", "3rd", "4", "5", etc.)
+   * @return Formatted date string (e.g., "1", "2", "3", "4", "5", etc.)
    */
-  String formatDay(String dateStr) {
-    // Convert to integer to remove leading zeros
+  String formatDay(String dateStr)
+  {
     int day = dateStr.toInt();
-
-    // Add appropriate suffix based on day number
-    if (day == 1 || day == 21 || day == 31) {
-      return String(day) + "st";
-    } else if (day == 2 || day == 22) {
-      return String(day) + "nd";
-    } else if (day == 3 || day == 23) {
-      return String(day) + "rd";
-    } else {
-      // For all other days (4-20, 24-30), just return the number
-      return String(day);
-    }
+    return String(day);
   }
 
   /**
@@ -880,10 +869,12 @@ private:
     }
   }
 
-  void displayTemperature(uint16_t x, uint16_t y, bool isLarge){
+  void displayTemperature(uint16_t x, uint16_t y, bool isLarge)
+  {
     char buffer[STRING_BUFFER_SIZE];
     memset(buffer, 0, sizeof(buffer));
-    if(isLarge) {
+    if (isLarge)
+    {
       snprintf(buffer, sizeof(buffer), "%s", weatherInfo.tempIntegerPart.c_str());
       EPD_ShowStringRightAligned(x, y, buffer, FONT_SIZE_92, BLACK);
       memset(buffer, 0, sizeof(buffer));
@@ -913,7 +904,6 @@ private:
 
       snprintf(buffer, sizeof(buffer), "%s", weatherInfo.tempIntegerPart.c_str());
       EPD_ShowStringRightAligned(x, y, buffer, FONT_SIZE_36, BLACK);
-
     }
   }
 
@@ -922,21 +912,26 @@ private:
     clearScreen();
     char buffer[STRING_BUFFER_SIZE];
 
-    // Display date (format: "Jan 01, Fri")
     memset(buffer, 0, sizeof(buffer));
     snprintf(buffer, sizeof(buffer), "%s ", convertUnixTimeToDisplayFormat(weatherInfo.currentDateTime).c_str());
+    //snprintf(buffer, sizeof(buffer), "５月４日　土");
     EPD_ShowStringRightAligned(790, 25, buffer, FONT_SIZE_36, BLACK);
 
     // Display weather icon
     String iconName = "icon_" + weatherInfo.icon + "_lg";
     EPD_drawImage(10, 1, getIcon(iconName.c_str()));
 
-    if (weatherApiResponse.containsKey("alerts") && weatherApiResponse["alerts"].size() > 0)
+    if (
+        (ENABLE_ALERT_DISPLAY == true)
+        && weatherApiResponse.containsKey("alerts")
+        && weatherApiResponse["alerts"].size() > 0
+      )
     {
       displayAlerts(270, 0);
       displayTemperature(740, 70, false);
     }
-    else{
+    else
+    {
       displayCurrentInfo(380, 30);
       displayTemperature(740, 105, true);
     }
