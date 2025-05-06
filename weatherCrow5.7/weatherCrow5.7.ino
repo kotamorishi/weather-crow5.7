@@ -860,7 +860,7 @@ private:
     {
       // Wind speed
       memset(buffer, 0, sizeof(buffer));
-      snprintf(buffer, sizeof(buffer), "%s", weatherApiResponse["current"]["wind_speed"].as<String>().c_str());
+      snprintf(buffer, sizeof(buffer), "%.1f", weatherApiResponse["current"]["wind_speed"].as<float>());
       EPD_ShowStringRightAligned(centerX, y, buffer, FONT_SIZE_36, BLACK);
 
       memset(buffer, 0, sizeof(buffer));
