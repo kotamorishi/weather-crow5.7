@@ -849,7 +849,7 @@ private:
     {
       // UVI
       memset(buffer, 0, sizeof(buffer));
-      snprintf(buffer, sizeof(buffer), "%s", weatherApiResponse["current"]["uvi"].as<String>().c_str());
+      snprintf(buffer, sizeof(buffer), "%.1f", weatherApiResponse["current"]["uvi"].as<float>().c_str());
       EPD_ShowStringRightAligned(centerX, y, buffer, FONT_SIZE_36, BLACK);
 
       memset(buffer, 0, sizeof(buffer));
