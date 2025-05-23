@@ -795,8 +795,8 @@ private:
 
     if (alert.containsKey("description"))
     {
-      String desc = alert["description"].as<String>();
-      // extract the first line
+      String desc = removeWarningDescription(alert["description"].as<String>());
+
       int lineBreakIndex = desc.indexOf('\n');
       if (lineBreakIndex != -1)
       {
@@ -815,6 +815,25 @@ private:
 
     return true;
   }
+
+  String removeWarningDescription(String description)
+  {
+    // Remove "What:\n", "\n\nHazard:\" from the description
+    const char *toBeRemoved[] = {
+      "What:\n",
+      "\n\nHazard:\n"
+    };
+    const int toBeRemovedCount = sizeof(toBeRemoved) / sizeof(toBeRemoved[0]);
+    for (int i = 0; i < toBeRemovedCount; ++i) {
+      int idx;
+      while ((idx = description.indexOf(toBeRemoved[i])) != -1) {
+        description.remove(idx, strlen(toBeRemoved[i]));
+      }
+    }
+
+    return description;
+  }
+
 
   void displayAdditionalInfoLine(uint16_t centerX, uint16_t y, uint16_t unitOffsetX, uint16_t unitOffsetY)
   {
