@@ -797,12 +797,6 @@ private:
     {
       String desc = removeWarningDescription(alert["description"].as<String>());
 
-      int lineBreakIndex = desc.indexOf('\n');
-      if (lineBreakIndex != -1)
-      {
-        desc = desc.substring(0, lineBreakIndex);
-      }
-
       if (desc.length() > STRING_BUFFER_SIZE - 5)
       {
         desc = desc.substring(0, STRING_BUFFER_SIZE - 5) + "...";
@@ -821,7 +815,11 @@ private:
     // Remove "What:\n", "\n\nHazard:\" from the description
     const char *toBeRemoved[] = {
       "What:\n",
-      "\n\nHazard:\n"
+      "\n\nHazard:\n",
+      "\n\nTiming:\n",
+      "\n\nAdditional information:\n",
+      "\n\n###\n",
+      "\n" // replace all line breaks
     };
     const int toBeRemovedCount = sizeof(toBeRemoved) / sizeof(toBeRemoved[0]);
     for (int i = 0; i < toBeRemovedCount; ++i) {
