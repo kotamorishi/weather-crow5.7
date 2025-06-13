@@ -374,7 +374,7 @@ private:
   /**
    * Processes the weather data from the API response
    */
-  bool processWeatherData()
+  bool processWeatherData(boolean isFromSPIFFS = false)
   {
     // Extract and process weather data
     weatherInfo.weather = weatherApiResponse["current"]["weather"][0]["main"].as<String>();
@@ -389,7 +389,9 @@ private:
     weatherInfo.timezone = weatherApiResponse["timezone"].as<String>();
 
     // set RTC to set current time (if RTC is available)
-    setRTC(weatherInfo.currentDateTime);
+    if(isFromSPIFFS == false){
+      setRTC(weatherInfo.currentDateTime);
+    }
 
     // Process temperature for display
     int decimalPos = weatherInfo.temperature.indexOf('.');
@@ -955,7 +957,6 @@ private:
 
     memset(buffer, 0, sizeof(buffer));
     snprintf(buffer, sizeof(buffer), "%s ", convertUnixTimeToDisplayFormat(weatherInfo.currentDateTime).c_str());
-    //snprintf(buffer, sizeof(buffer), "５月４日　土");
     EPD_ShowStringRightAligned(790, 25, buffer, FONT_SIZE_36, BLACK);
 
     // Display weather icon
@@ -979,6 +980,16 @@ private:
 
     // Display future forecast
     drawWeatherFutureForecast(270, 160, 5);
+
+    // if spiffsManager.getConsecutiveFailureCount() > 0, display the latest updated time
+    if (spiffsManager.getConsecutiveFailureCount() > 0)
+    {
+      memset(buffer, 0, sizeof(buffer));
+      snprintf(buffer, sizeof(buffer), " WIFI/API FAILED %d TIME(S). LATEST SUCCESS : %s",
+        spiffsManager.getConsecutiveFailureCount(),
+        convertUnixTimeToSpecifiedDateTimeString(weatherInfo.currentDateTime, "%Y-%m-%d %H:%M").c_str());
+      EPD_ShowString(10, 270, buffer, FONT_SIZE_8, BLACK);
+    }
 
     // clock frequency is reduced to 80MHz to save power
     if (LOW_POWER_MODE)
@@ -1326,7 +1337,7 @@ public:
 
       ledOn();
 
-      connectToWiFi();
+      //connectToWiFi();
 
       if (!getWeatherInfo(MAX_WEATHER_API_RETRIES))
       {
@@ -1334,8 +1345,10 @@ public:
         int failureCount = spiffsManager.getConsecutiveFailureCount() + 1;
         spiffsManager.updateConsecutiveFailureCount(failureCount);
 
-        // Try to load cached data if available
-        if (spiffsManager.loadLatestWeatherDataFromSPIFFS(weatherApiResponse) && processWeatherData())
+        if (
+          failureCount < MAX_CONSECUTIVE_FAILURES &&
+          spiffsManager.loadLatestWeatherDataFromSPIFFS(weatherApiResponse) &&
+          processWeatherData(true))
         {
           logPrintln("Using cached weather data from SPIFFS");
           displayWeatherForecast();
