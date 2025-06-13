@@ -5,8 +5,10 @@
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
 #include <sys/time.h>
+#include <SPIFFS.h>
 #include "EPD.h"
 #include "weatherIcons.h"
+#include "SPIFFSManager.h"
 
 // Communication and data constants
 #define BAUD_RATE 115200
@@ -21,6 +23,12 @@
 
 // LED
 #define PWR_LED_PIN 41
+
+// SPIFFS and retry constants
+#define MAX_WEATHER_DATA_HISTORY 3
+#define MAX_CONSECUTIVE_FAILURES 3
+#define RETRY_SLEEP_MINUTES 5
+#define EXTENDED_SLEEP_MINUTES 60
 
 class WeatherCrow
 {
@@ -41,6 +49,9 @@ private:
   int httpResponseCode = HTTP_NOT_REQUESTED_YET;
   DynamicJsonDocument weatherApiResponse = DynamicJsonDocument(JSON_CAPACITY);
   bool ledState = false;
+
+  // SPIFFS Manager
+  SPIFFSManager spiffsManager;
 
   /**
    * Weather information structure to store processed data from API
@@ -116,6 +127,12 @@ private:
     {
       logPrintln("Failed to connect to WiFi. Retrying...");
       errorMessageBuffer = "Failed to connect to the WiFi network.";
+      spiffsManager.logConnectionAttempt(false, errorMessageBuffer);
+    }
+    else
+    {
+      logPrintln("WiFi connected successfully");
+      spiffsManager.logConnectionAttempt(true);
     }
     logPrintln("");
   }
@@ -475,6 +492,13 @@ private:
       if (!success)
       {
         currentRetry++;
+      }
+      else
+      {
+        // Save successful weather data to SPIFFS
+        spiffsManager.saveWeatherDataToSPIFFS(jsonBuffer);
+        // Reset failure count on success
+        spiffsManager.updateConsecutiveFailureCount(0);
       }
     }
 
@@ -1264,6 +1288,11 @@ public:
     return calculateSleepDuration();
   }
 
+  int getConsecutiveFailureCount()
+  {
+    return spiffsManager.getConsecutiveFailureCount();
+  }
+
   void begin()
   {
     errorMessageBuffer = "";
@@ -1275,6 +1304,12 @@ public:
     {
       // when not in low power mode, set output to avoid leakage current.
       pinMode(PWR_LED_PIN, OUTPUT);
+    }
+
+    // Initialize SPIFFS
+    if (!spiffsManager.initSPIFFS())
+    {
+      logPrintln("Warning: SPIFFS initialization failed, continuing without persistent storage");
     }
   }
 
@@ -1295,13 +1330,27 @@ public:
 
       if (!getWeatherInfo(MAX_WEATHER_API_RETRIES))
       {
-        char title[] = "Weather API failed.";
-        char msg[256];
-        memset(msg, 0, sizeof(msg));
-        snprintf(msg, sizeof(msg), "%s\n\n(After %d retry attempts)",
-                 errorMessageBuffer.c_str(), MAX_WEATHER_API_RETRIES);
-        displayErrorMessage(title, msg);
-        return false;
+        // Increment failure count
+        int failureCount = spiffsManager.getConsecutiveFailureCount() + 1;
+        spiffsManager.updateConsecutiveFailureCount(failureCount);
+
+        // Try to load cached data if available
+        if (spiffsManager.loadLatestWeatherDataFromSPIFFS(weatherApiResponse) && processWeatherData())
+        {
+          logPrintln("Using cached weather data from SPIFFS");
+          displayWeatherForecast();
+          return true;
+        }
+        else
+        {
+          char title[] = "Weather API failed.";
+          char msg[256];
+          memset(msg, 0, sizeof(msg));
+          snprintf(msg, sizeof(msg), "%s\n\n(After %d retry attempts, consecutive failures: %d)",
+                   errorMessageBuffer.c_str(), MAX_WEATHER_API_RETRIES, failureCount);
+          displayErrorMessage(title, msg);
+          return false;
+        }
       }
       else
       {
@@ -1346,8 +1395,21 @@ void loop()
   }
   else
   {
-    // refresh failed, wait for 5 minutes and try again.
-    esp_sleep_enable_timer_wakeup(1000000ULL * 60ULL * 5);
+    // Check consecutive failure count
+    int failureCount = weatherCrow.getConsecutiveFailureCount();
+
+    if (failureCount >= MAX_CONSECUTIVE_FAILURES)
+    {
+      // After 3 consecutive failures, sleep for 1 hour
+      Serial.println("Max consecutive failures reached, sleeping for 1 hour");
+      esp_sleep_enable_timer_wakeup(1000000ULL * 60ULL * EXTENDED_SLEEP_MINUTES);
+    }
+    else
+    {
+      // Regular retry - sleep for 5 minutes
+      Serial.println("API failed, retrying in 5 minutes");
+      esp_sleep_enable_timer_wakeup(1000000ULL * 60ULL * RETRY_SLEEP_MINUTES);
+    }
     esp_deep_sleep_start();
   }
 }
