@@ -1337,7 +1337,7 @@ public:
 
       ledOn();
 
-      //connectToWiFi();
+      connectToWiFi();
 
       if (!getWeatherInfo(MAX_WEATHER_API_RETRIES))
       {
