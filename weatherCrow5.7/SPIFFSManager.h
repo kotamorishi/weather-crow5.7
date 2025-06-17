@@ -21,6 +21,7 @@ public:
   void logConnectionAttempt(bool success, const String& errorMessage = "");
   int getConsecutiveFailureCount();
   void updateConsecutiveFailureCount(int count);
+  long getLastConnectionTimestamp();
 };
 
 #endif
