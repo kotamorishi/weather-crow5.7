@@ -221,7 +221,15 @@ private:
 
     // Display latest API call time
     memset(buffer, 0, sizeof(buffer));
-    snprintf(buffer, sizeof(buffer), "LATEST SUCCESSFUL API CALL: %s", convertUnixTimeToDateTimeString(weatherInfo.currentDateTime).c_str());
+    // use getLastConnectionTimestamp to get the last successful API call time
+    if (spiffsManager.getLastConnectionTimestamp() == 0)
+    {
+      snprintf(buffer, sizeof(buffer), "LATEST SUCCESSFUL API CALL NOT AVAILABLE.");
+    }
+    else
+    {
+      snprintf(buffer, sizeof(buffer), "LATEST SUCCESSFUL API CALL: %s", convertUnixTimeToDateTimeString(spiffsManager.getLastConnectionTimestamp()).c_str());
+    }
     EPD_ShowString(x, y, buffer, FONT_SIZE_8, BLACK, false);
   }
 
@@ -1359,8 +1367,8 @@ public:
           char title[] = "Weather API failed.";
           char msg[256];
           memset(msg, 0, sizeof(msg));
-          snprintf(msg, sizeof(msg), "%s\n\n(After %d retry attempts, consecutive failures: %d)",
-                   errorMessageBuffer.c_str(), MAX_WEATHER_API_RETRIES, failureCount);
+          snprintf(msg, sizeof(msg), "%s\nKeep failing %d times.\nPlease check your WiFi connection or API key.",
+                   errorMessageBuffer.c_str(), failureCount);
           displayErrorMessage(title, msg);
           return false;
         }
