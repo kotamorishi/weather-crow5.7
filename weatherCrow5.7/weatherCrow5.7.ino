@@ -744,7 +744,7 @@ private:
    * @param maxLength The maximum length of the string
    * @return The truncated string
    */
-  String truncateString(String str, size_t maxLength)
+  String truncateString(const String& str, size_t maxLength)
   {
     if (str.length() > maxLength)
     {
