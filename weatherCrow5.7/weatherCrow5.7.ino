@@ -739,7 +739,8 @@ private:
   }
 
   /**
-   * truncate the string to a maximum length
+   * truncate the string to a maximum length, appending "..." if truncated
+   * if the maxLength is set to 10, the string will be truncated to 10 characters with "..." appended
    * @param str The string to truncate
    * @param maxLength The maximum length of the string
    * @return The truncated string
