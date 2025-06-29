@@ -739,6 +739,21 @@ private:
   }
 
   /**
+   * truncate the string to a maximum length
+   * @param str The string to truncate
+   * @param maxLength The maximum length of the string
+   * @return The truncated string
+   */
+  String truncateString(String str, size_t maxLength)
+  {
+    if (str.length() > maxLength)
+    {
+      return str.substring(0, maxLength) + "...";
+    }
+    return str;
+  }
+
+  /**
    * Displays weather alerts information
    * @param baseX X position for alert display
    * @param baseY Y position for alert display
@@ -763,6 +778,8 @@ private:
     if (alert.containsKey("event"))
     {
       String event = alert["event"].as<String>();
+      event = truncateString(event, 10);
+
       event[0] = toupper(event[0]);
       memset(buffer, 0, sizeof(buffer));
       snprintf(buffer, sizeof(buffer), "%s", event.c_str());
@@ -773,6 +790,7 @@ private:
     if (alert.containsKey("sender_name") && alert.containsKey("start") && alert.containsKey("end"))
     {
       String senderName = alert["sender_name"].as<String>();
+      senderName = truncateString(senderName, 28);
       long startTime = alert["start"].as<long>();
       long endTime = alert["end"].as<long>();
 
