@@ -816,10 +816,8 @@ private:
     {
       String desc = removeWarningDescription(alert["description"].as<String>());
 
-      if (desc.length() > STRING_BUFFER_SIZE - 5)
-      {
-        desc = desc.substring(0, STRING_BUFFER_SIZE - 5) + "...";
-      }
+      int maxLength = 200; // Maximum length for description
+      desc = truncateString(desc, maxLength);
 
       memset(buffer, 0, sizeof(buffer));
       snprintf(buffer, sizeof(buffer), "%s", desc.c_str());
