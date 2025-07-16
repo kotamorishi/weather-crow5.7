@@ -40,7 +40,7 @@
 #define HOUR_INTERVAL 3
 
 // Low power mode, when you powring the device with battery set to true
-#define LOW_POWER_MODE false
+#define LOW_POWER_MODE true
 
 // alert display
-#define ENABLE_ALERT_DISPLAY true
+#define ENABLE_ALERT_DISPLAY false
