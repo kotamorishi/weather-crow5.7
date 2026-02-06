@@ -487,7 +487,7 @@ private:
     char buffer[STRING_BUFFER_SIZE];
 
     String icon;
-    if (hourlyData["weather"][0].containsKey("icon")) {
+    if (!hourlyData["weather"][0]["icon"].isNull()) {
       icon = "icon_" + hourlyData["weather"][0]["icon"].as<String>();
     } else {
       icon = "na_md"; // default fallback icon
@@ -534,7 +534,7 @@ private:
     char buffer[STRING_BUFFER_SIZE];
 
     // Check if hourly data exists
-    if (!weatherApiResponse.containsKey("hourly")) {
+    if (weatherApiResponse["hourly"].isNull()) {
       memset(buffer, 0, sizeof(buffer));
       snprintf(buffer, sizeof(buffer), "%s",
                "Error: API not responding with hourly forecast data.");
@@ -565,7 +565,7 @@ private:
 
       JsonObject hourly = weatherApiResponse["hourly"][i];
 
-      if (!hourly.containsKey("weather") || hourly["weather"].size() == 0) {
+      if (hourly["weather"].isNull() || hourly["weather"].size() == 0) {
         Serial.println("No weather data for this hour");
         continue;
       }
@@ -619,7 +619,7 @@ private:
     char buffer[STRING_BUFFER_SIZE];
 
     // Check if hourly data exists
-    if (!weatherApiResponse.containsKey("hourly")) {
+    if (weatherApiResponse["hourly"].isNull()) {
       memset(buffer, 0, sizeof(buffer));
       snprintf(buffer, sizeof(buffer), "%s", "Error: No hourly data available");
       EPD_ShowString(x, y, buffer, FONT_SIZE_16, BLACK, true);
@@ -762,7 +762,7 @@ private:
     x += 75;
 
     // Display event type
-    if (alert.containsKey("event")) {
+    if (!alert["event"].isNull()) {
       String event = alert["event"].as<String>();
       event = truncateString(event, 10);
 
@@ -773,8 +773,8 @@ private:
       y += 45;
     }
 
-    if (alert.containsKey("sender_name") && alert.containsKey("start") &&
-        alert.containsKey("end")) {
+    if (!alert["sender_name"].isNull() && !alert["start"].isNull() &&
+        !alert["end"].isNull()) {
       String senderName = alert["sender_name"].as<String>();
       senderName = truncateString(senderName, 28);
       long startTime = alert["start"].as<long>();
@@ -801,7 +801,7 @@ private:
       y += 25;
     }
 
-    if (alert.containsKey("description")) {
+    if (!alert["description"].isNull()) {
       String desc = removeWarningDescription(alert["description"].as<String>());
 
       int maxLength = 200; // Maximum length for description
@@ -840,8 +840,8 @@ private:
                                  uint16_t unitOffsetX, uint16_t unitOffsetY) {
     char buffer[STRING_BUFFER_SIZE];
 
-    if ((weatherApiResponse["current"].containsKey("snow")) &&
-        (weatherApiResponse["current"]["snow"].containsKey("1h"))) {
+    if (!weatherApiResponse["current"]["snow"].isNull() &&
+        !weatherApiResponse["current"]["snow"]["1h"].isNull()) {
       // Snow
       memset(buffer, 0, sizeof(buffer));
       snprintf(
@@ -853,8 +853,8 @@ private:
       snprintf(buffer, sizeof(buffer), "mm snow");
       EPD_ShowString(centerX + unitOffsetX, y + unitOffsetY, buffer,
                      FONT_SIZE_16, BLACK, false);
-    } else if ((weatherApiResponse["current"].containsKey("rain")) &&
-               (weatherApiResponse["current"]["rain"].containsKey("1h"))) {
+    } else if (!weatherApiResponse["current"]["rain"].isNull() &&
+               !weatherApiResponse["current"]["rain"]["1h"].isNull()) {
       // Rain
       memset(buffer, 0, sizeof(buffer));
       snprintf(
@@ -866,7 +866,7 @@ private:
       snprintf(buffer, sizeof(buffer), "mm rain");
       EPD_ShowString(centerX + unitOffsetX, y + unitOffsetY, buffer,
                      FONT_SIZE_16, BLACK, false);
-    } else if ((weatherApiResponse["current"].containsKey("uvi")) &&
+    } else if (!weatherApiResponse["current"]["uvi"].isNull() &&
                (weatherApiResponse["current"]["uvi"].as<float>() >
                 UVI_DISPLAY_THRESHOLD)) {
       // UVI
@@ -939,7 +939,7 @@ private:
     EPD_drawImage(10, 1, getIcon(iconName.c_str()));
 
     if ((ENABLE_ALERT_DISPLAY == true) &&
-        weatherApiResponse.containsKey("alerts") &&
+        !weatherApiResponse["alerts"].isNull() &&
         weatherApiResponse["alerts"].size() > 0) {
       displayAlerts(270, 0);
       displayTemperature(740, 70, false);
@@ -1147,14 +1147,14 @@ private:
       }
 
       // Check for weather alerts
-      if (weatherApiResponse.containsKey("alerts") &&
+      if (!weatherApiResponse["alerts"].isNull() &&
           weatherApiResponse["alerts"].size() > 0) {
         // Current time in unix timestamp
         time_t now = currentTime;
 
         // Iterate through alerts to find closest upcoming start or end time
         for (size_t i = 0; i < weatherApiResponse["alerts"].size(); i++) {
-          if (weatherApiResponse["alerts"][i].containsKey("start")) {
+          if (!weatherApiResponse["alerts"][i]["start"].isNull()) {
             time_t alertStartTime =
                 weatherApiResponse["alerts"][i]["start"].as<long>();
 
@@ -1170,7 +1170,7 @@ private:
             }
           }
 
-          if (weatherApiResponse["alerts"][i].containsKey("end")) {
+          if (!weatherApiResponse["alerts"][i]["end"].isNull()) {
             time_t alertEndTime =
                 weatherApiResponse["alerts"][i]["end"].as<long>();
 
