@@ -68,17 +68,9 @@ bool ConfigManager::begin(int buttonPin) {
   if (!connected) {
     Serial.println("[ConfigManager] WiFi connection failed");
 
-    // If no config exists, we must show portal for first-time setup
-    if (!isConfigured()) {
-      Serial.println(
-          "[ConfigManager] No configuration found - starting config portal");
-      return startConfigPortal();
-    }
-
-    // Config exists but WiFi failed - let main app handle retry
-    Serial.println(
-        "[ConfigManager] Config exists, returning false for retry handling");
-    return false;
+    // Start config portal when WiFi fails OR no configuration exists
+    Serial.println("[ConfigManager] Starting config portal for setup...");
+    return startConfigPortal();
   }
 
   Serial.println("[ConfigManager] WiFi connected!");
