@@ -1321,34 +1321,30 @@ void displayConfigPortalScreen(const char *apName, const char *ipAddress) {
 
   char buffer[128];
 
-  // Screen is 792w x 272h - use horizontal layout
-  // Left side: WiFi info, Right side: URL info
+  EPD_drawImage(10, 20, icon_11d_lg);
 
-  // Title at top
-  EPD_ShowString(20, 28, "Welcome to Weather Crow", FONT_SIZE_16, BLACK);
+  uint16_t baseXpos = 288;
 
-  // Left column (x: 20-390)
-  EPD_ShowString(20, 70, "Please connect to WiFi", FONT_SIZE_16, BLACK);
+  EPD_ShowString(baseXpos, 28, "Welcome to Weather Crow", FONT_SIZE_16, BLACK);
 
-  // AP Name - prominent
+  EPD_ShowString(baseXpos, 60, "Please connect to WiFi", FONT_SIZE_16, BLACK);
+
   memset(buffer, 0, sizeof(buffer));
   snprintf(buffer, sizeof(buffer), "%s", apName);
-  EPD_ShowString(20, 95, buffer, FONT_SIZE_36, BLACK);
+  EPD_ShowString(baseXpos, 95, buffer, FONT_SIZE_36, BLACK);
 
-  // Bottom instructions (full width)
-  EPD_ShowString(20, 135, "Access the URL to configure the device.",
+  EPD_ShowString(baseXpos, 135, "Access the URL to configure the device.",
                  FONT_SIZE_16, BLACK);
 
-  // IP Address - prominent
   memset(buffer, 0, sizeof(buffer));
   snprintf(buffer, sizeof(buffer), "http://%s", ipAddress);
-  EPD_ShowString(20, 165, buffer, FONT_SIZE_36, BLACK);
+  EPD_ShowString(baseXpos, 165, buffer, FONT_SIZE_36, BLACK);
 
-  // Footer notes
-  EPD_ShowString(20, 225,
+  EPD_ShowString(baseXpos, 225,
                  "Timeout: 5 min | Hold config button on boot to re-enter",
                  FONT_SIZE_16, BLACK);
-  EPD_ShowString(20, 255, "Device restarts after save.", FONT_SIZE_16, BLACK);
+  EPD_ShowString(baseXpos, 255, "Device restarts after save.", FONT_SIZE_16,
+                 BLACK);
 
   // Update display
   EPD_Display(configImageBW);
