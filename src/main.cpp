@@ -1327,14 +1327,14 @@ void displayConfigPortalScreen(const char *apName, const char *ipAddress) {
 
   EPD_ShowString(baseXpos, 28, "Weather Crow setup", FONT_SIZE_16, BLACK);
 
-  EPD_ShowString(baseXpos, 60, "Please connect to WiFi", FONT_SIZE_16, BLACK);
+  EPD_ShowString(baseXpos, 60, "Connect to WiFi", FONT_SIZE_16, BLACK);
 
   memset(buffer, 0, sizeof(buffer));
   snprintf(buffer, sizeof(buffer), "%s", apName);
   EPD_ShowString(baseXpos, 95, buffer, FONT_SIZE_36, BLACK);
 
-  EPD_ShowString(baseXpos, 135, "Access the URL to configure the device.",
-                 FONT_SIZE_16, BLACK);
+  EPD_ShowString(baseXpos, 135, "Access the URL to configure", FONT_SIZE_16,
+                 BLACK);
 
   memset(buffer, 0, sizeof(buffer));
   snprintf(buffer, sizeof(buffer), "http://%s", ipAddress);
