@@ -1,3 +1,4 @@
+#include "ConfigManager.h"
 #include "EPD.h"
 #include "config.h"
 #include "weatherIcons.h"
@@ -23,17 +24,31 @@
 // LED
 #define PWR_LED_PIN 41
 
+// Config button pin (GPIO 0 is typically BOOT button on ESP32 dev boards)
+#define CONFIG_BUTTON_PIN 2
+
+// Global ConfigManager instance
+ConfigManager configManager;
+
+// Forward declarations for display functions used by config portal
+void displayConfigPortalScreen(const char *apName, const char *ipAddress);
+
+// Display buffer for config screen (shared with WeatherCrow)
+uint8_t configImageBW[27200];
+
 class WeatherCrow {
 private:
   // Display buffer
   uint8_t imageBW[27200];
 
-  // Network and API configuration
-  const char *ssid = WIFI_SSID;
-  const char *password = WIFI_PASSWORD;
-  String openWeatherMapApiKey = OPEN_WEATHER_MAP_API_KEY;
-  String apiParamLatitude = LATITUDE;
-  String apiParamLongitude = LONGITUDE;
+  // Network and API configuration (loaded from ConfigManager)
+  String openWeatherMapApiKey;
+  String apiParamLatitude;
+  String apiParamLongitude;
+  String locationName;
+  int refreshMinutes;
+  int hourInterval;
+  bool lowPowerMode;
 
   // Data buffers
   String jsonBuffer;
@@ -87,31 +102,27 @@ private:
   }
 
   /**
-   * Connects to WiFi network using configured credentials
+   * Load configuration from ConfigManager
    */
-  void connectToWiFi() {
-    WiFi.begin(ssid, password);
-    logPrintln("WiFi Connecting");
-    unsigned long startAttemptTime = millis();
-    const unsigned long WIFI_TIMEOUT_MS = 180000; // 3 minutes timeout
+  void loadConfiguration() {
+    openWeatherMapApiKey = configManager.getApiKey();
+    apiParamLatitude = configManager.getLatitude();
+    apiParamLongitude = configManager.getLongitude();
+    locationName = configManager.getLocationName();
+    refreshMinutes = configManager.getRefreshMinutes();
+    hourInterval = configManager.getHourInterval();
+    lowPowerMode = configManager.getLowPowerMode();
 
-    while (WiFi.status() != WL_CONNECTED &&
-           millis() - startAttemptTime < WIFI_TIMEOUT_MS) {
-      delay(300);
-      logPrint(".");
-      ledToggle();
-    }
-
-    if (LOW_POWER_MODE) {
-      // Restore CPU frequency to 240MHz for faster WiFi connection
-      setCpuFrequencyMhz(240);
-    }
-
-    if (WiFi.status() != WL_CONNECTED) {
-      logPrintln("Failed to connect to WiFi. Retrying...");
-      errorMessageBuffer = "Failed to connect to the WiFi network.";
-    }
-    logPrintln("");
+    logPrintln("Configuration loaded:");
+    logPrint("  Location: ");
+    logPrintln(locationName);
+    logPrint("  Coordinates: ");
+    logPrint(apiParamLatitude);
+    logPrint(", ");
+    logPrintln(apiParamLongitude);
+    logPrint("  Refresh: ");
+    logPrint(refreshMinutes);
+    logPrintln(" minutes");
   }
 
   void screenPowerOn() {
@@ -444,7 +455,7 @@ private:
         return false; // Don't retry for other error codes
       }
 
-      if (LOW_POWER_MODE) {
+      if (lowPowerMode) {
         // Turn off wireless as soon as possible.
         wirelessOff();
       }
@@ -545,7 +556,7 @@ private:
     int forecastsToShow = min(length, (uint16_t)availableHours);
 
     for (uint16_t i = 1, counter = 0; counter < forecastsToShow;
-         i += HOUR_INTERVAL, counter++) {
+         i += hourInterval, counter++) {
       // Safely check if the hourly entry exists
       if (i >= availableHours) {
         Serial.println("Index out of bounds for hourly forecast");
@@ -941,7 +952,7 @@ private:
     drawWeatherFutureForecast(270, 160, 5);
 
     // clock frequency is reduced to 80MHz to save power
-    if (LOW_POWER_MODE) {
+    if (lowPowerMode) {
       setCpuFrequencyMhz(80);
     }
 
@@ -1107,7 +1118,7 @@ private:
   uint64_t calculateSleepDuration() {
     // Standard refresh time calculation
     uint64_t minSleepDuration = 1000000ULL * 60ULL * 10; // 10 minutes
-    uint64_t requestedSleepDuration = 1000000ULL * 60ULL * REFRESH_MINUTES;
+    uint64_t requestedSleepDuration = 1000000ULL * 60ULL * refreshMinutes;
     uint64_t regularSleepDuration = (requestedSleepDuration < minSleepDuration)
                                         ? minSleepDuration
                                         : requestedSleepDuration;
@@ -1199,7 +1210,7 @@ private:
   }
 
   void ledToggle() {
-    if (LOW_POWER_MODE)
+    if (lowPowerMode)
       return;
 
     if (ledState) {
@@ -1212,7 +1223,7 @@ private:
   }
 
   void ledOff() {
-    if (LOW_POWER_MODE)
+    if (lowPowerMode)
       return;
 
     digitalWrite(PWR_LED_PIN, LOW);
@@ -1220,7 +1231,7 @@ private:
   }
 
   void ledOn() {
-    if (LOW_POWER_MODE)
+    if (lowPowerMode)
       return;
 
     digitalWrite(PWR_LED_PIN, HIGH);
@@ -1232,11 +1243,9 @@ public:
 
   void begin() {
     errorMessageBuffer = "";
-    delay(1000);
-    Serial.begin(BAUD_RATE);
     screenPowerOn();
     EPD_GPIOInit();
-    if (LOW_POWER_MODE == false) {
+    if (!lowPowerMode) {
       // when not in low power mode, set output to avoid leakage current.
       pinMode(PWR_LED_PIN, OUTPUT);
     }
@@ -1251,9 +1260,18 @@ public:
       // displayMonsterIconsTest();
       // delay(500000);
 
-      ledOn();
+      // Load configuration from ConfigManager
+      loadConfiguration();
 
-      connectToWiFi();
+      // Check if WiFi is connected (ConfigManager handles connection)
+      if (WiFi.status() != WL_CONNECTED) {
+        errorMessageBuffer = "WiFi not connected. Check configuration.";
+        char title[] = "WiFi Connection Failed";
+        char msg[] =
+            "Please hold the config button during boot to reconfigure.";
+        displayErrorMessage(title, msg);
+        return false;
+      }
 
       if (!getWeatherInfo(MAX_WEATHER_API_RETRIES)) {
         char title[] = "Weather API failed.";
@@ -1279,13 +1297,94 @@ public:
 
 WeatherCrow weatherCrow;
 
-void setup() {
+/**
+ * Display configuration portal instructions on e-paper screen
+ * Called by ConfigManager before starting the access point
+ * Screen resolution: 792w x 272h
+ */
+void displayConfigPortalScreen(const char *apName, const char *ipAddress) {
+  Serial.println("[Display] Showing config portal instructions");
 
-  if (LOW_POWER_MODE) {
+  // Initialize display
+  const int SCREEN_POWER_PIN = 7;
+  pinMode(SCREEN_POWER_PIN, OUTPUT);
+  digitalWrite(SCREEN_POWER_PIN, HIGH);
+  delay(100);
+
+  EPD_GPIOInit();
+  Paint_NewImage(configImageBW, EPD_W, EPD_H, Rotation, WHITE);
+  Paint_Clear(WHITE);
+  EPD_FastMode1Init();
+  EPD_Display_Clear();
+  EPD_Update();
+  EPD_Clear_R26A6H();
+
+  char buffer[128];
+
+  // Screen is 792w x 272h - use horizontal layout
+  // Left side: WiFi info, Right side: URL info
+
+  // Title at top
+  EPD_ShowString(20, 28, "Welcome to Weather Crow", FONT_SIZE_16, BLACK);
+
+  // Left column (x: 20-390)
+  EPD_ShowString(20, 70, "Please connect to WiFi", FONT_SIZE_16, BLACK);
+
+  // AP Name - prominent
+  memset(buffer, 0, sizeof(buffer));
+  snprintf(buffer, sizeof(buffer), "%s", apName);
+  EPD_ShowString(20, 95, buffer, FONT_SIZE_36, BLACK);
+
+  // Bottom instructions (full width)
+  EPD_ShowString(20, 135, "Access the URL to configure the device.",
+                 FONT_SIZE_16, BLACK);
+
+  // IP Address - prominent
+  memset(buffer, 0, sizeof(buffer));
+  snprintf(buffer, sizeof(buffer), "http://%s", ipAddress);
+  EPD_ShowString(20, 165, buffer, FONT_SIZE_36, BLACK);
+
+  // Footer notes
+  EPD_ShowString(20, 225,
+                 "Timeout: 5 min | Hold config button on boot to re-enter",
+                 FONT_SIZE_16, BLACK);
+  EPD_ShowString(20, 255, "Device restarts after save.", FONT_SIZE_16, BLACK);
+
+  // Update display
+  EPD_Display(configImageBW);
+  EPD_PartUpdate();
+
+  Serial.println("[Display] Config portal screen displayed");
+}
+
+void setup() {
+  // Initialize Serial first for debug output
+  Serial.begin(BAUD_RATE);
+  delay(1000);
+  Serial.println("\n\n=== Weather Crow Starting ===");
+
+  // Set callback to display config portal instructions on e-paper
+  configManager.setPortalStartCallback(displayConfigPortalScreen);
+
+  // Initialize ConfigManager - this handles WiFi connection
+  // If config button is held, it will show the config portal
+  bool wifiConnected = configManager.begin(CONFIG_BUTTON_PIN);
+
+  // Get low power mode from config (or use default if not yet configured)
+  bool lowPowerMode =
+      configManager.isConfigured() ? configManager.getLowPowerMode() : true;
+
+  if (lowPowerMode) {
     setCpuFrequencyMhz(80);
     btStop(); // Disable Bluetooth, as it is not used in this project
+    Serial.println("[Setup] Low power mode enabled");
   }
+
   weatherCrow.begin();
+
+  if (!wifiConnected) {
+    Serial.println("[Setup] WiFi not connected - will retry in loop");
+  }
 }
 
 void loop() {
