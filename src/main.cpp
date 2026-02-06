@@ -1302,8 +1302,11 @@ WeatherCrow weatherCrow;
  * Called by ConfigManager before starting the access point
  * Screen resolution: 792w x 272h
  */
-void displayConfigPortalScreen(const char *apName, const char *ipAddress) {
+void displayConfigPortalScreen(const char *apName, const char *ipAddress,
+                               const char *reason) {
   Serial.println("[Display] Showing config portal instructions");
+  Serial.print("[Display] Reason: ");
+  Serial.println(reason);
 
   // Initialize display
   const int SCREEN_POWER_PIN = 7;
@@ -1325,7 +1328,8 @@ void displayConfigPortalScreen(const char *apName, const char *ipAddress) {
 
   uint16_t baseXpos = 288;
 
-  EPD_ShowString(baseXpos, 28, "Weather Crow setup", FONT_SIZE_16, BLACK);
+  // Display reason (e.g., "WiFi Connection Failed" or "Manual Setup")
+  EPD_ShowString(baseXpos, 28, reason, FONT_SIZE_16, BLACK);
 
   EPD_ShowString(baseXpos, 60, "Connect to WiFi", FONT_SIZE_16, BLACK);
 

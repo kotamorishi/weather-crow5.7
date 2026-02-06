@@ -49,7 +49,7 @@ bool ConfigManager::begin(int buttonPin) {
   if (isConfigButtonHeld()) {
     Serial.println(
         "[ConfigManager] Config button held - starting config portal");
-    return startConfigPortal();
+    return startConfigPortal("Manual Setup");
   }
 
   // Try to connect with saved credentials
@@ -70,7 +70,7 @@ bool ConfigManager::begin(int buttonPin) {
 
     // Start config portal when WiFi fails OR no configuration exists
     Serial.println("[ConfigManager] Starting config portal for setup...");
-    return startConfigPortal();
+    return startConfigPortal("WiFi Connection Failed");
   }
 
   Serial.println("[ConfigManager] WiFi connected!");
@@ -80,7 +80,7 @@ bool ConfigManager::begin(int buttonPin) {
   return true;
 }
 
-bool ConfigManager::startConfigPortal() {
+bool ConfigManager::startConfigPortal(const char *reason) {
   WiFiManager wm;
 
   // Setup custom parameters
@@ -101,7 +101,7 @@ bool ConfigManager::startConfigPortal() {
 
   // Call the portal start callback to display on e-paper
   if (portalStartCallback) {
-    portalStartCallback("WeatherCrow-Config", "192.168.4.1");
+    portalStartCallback("WeatherCrow-Config", "192.168.4.1", reason);
   }
 
   bool result = wm.startConfigPortal("WeatherCrow-Config");

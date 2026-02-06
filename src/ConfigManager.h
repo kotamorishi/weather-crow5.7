@@ -71,7 +71,7 @@ public:
    * Blocks until configuration is complete or timeout
    * @return true if configuration was saved
    */
-  bool startConfigPortal();
+  bool startConfigPortal(const char *reason);
 
   /**
    * Load configuration from Preferences (NVS)
@@ -108,11 +108,11 @@ public:
   /**
    * Set a callback function that will be called before the config portal starts
    * Use this to display instructions on the e-paper screen
-   * @param callback Function pointer that takes AP name and IP address as
-   * parameters
+   * @param callback Function pointer that takes AP name, IP address, and reason
    */
   void setPortalStartCallback(void (*callback)(const char *apName,
-                                               const char *ipAddress)) {
+                                               const char *ipAddress,
+                                               const char *reason)) {
     portalStartCallback = callback;
   }
 
@@ -120,7 +120,8 @@ private:
   AppConfig config;
   Preferences preferences;
   int configButtonPin;
-  void (*portalStartCallback)(const char *, const char *) = nullptr;
+  void (*portalStartCallback)(const char *, const char *,
+                              const char *) = nullptr;
 
   // WiFiManager custom parameters
   WiFiManagerParameter *paramApiKey;
