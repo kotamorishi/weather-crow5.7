@@ -10,43 +10,49 @@ The weather data is fetched from the [OpenWeatherMap](https://openweathermap.org
 # What you need
 - Hardware : [CrowPanel ESP32 E-Paper HMI 5.79-inch Display](https://www.elecrow.com/crowpanel-esp32-5-79-e-paper-hmi-display-with-272-792-resolution-black-white-color-driven-by-spi-interface.html)
 - API Key : [OpenWeatherMap API key](https://openweathermap.org/)
-- Software : [Arduino IDE > 2.3.4](https://www.arduino.cc/en/software)
+- Software : [PlatformIO](https://platformio.org/) (CLI or VS Code extension)
 
-# Setup the environment
-1. Install the ESP32 board in Arduino IDE
-   - Open Arduino IDE
-   - Go to File > Preferences
-   - In the Additional Boards Manager URLs field, add the following URL:
-     ```
-     https://dl.espressif.com/dl/package_esp32_index.json
-     ```
-   - Click OK
-   - Go to Tools > Board > Boards Manager
-   - Search for `esp32` and install the board
+# Setup
 
-2. Install the required libraries
-    - Open Arduino IDE
-    - Go to Sketch > Include Library > Manage Libraries
-    - Search for and install the following libraries:
-      - Arduino_Json
+1. **Install PlatformIO**
+   - Install via [VS Code extension](https://platformio.org/install/ide?install=vscode) (recommended), or
+   - Install via Homebrew: `brew install platformio`, or
+   - Install via pip: `pip install platformio`
 
-3. Download the code
-    - Clone this repo or download the code as a zip file
-    - Open the `weather-crow5.7.ino` file in Arduino IDE
+2. **Clone the repository**
+   ```bash
+   git clone https://github.com/your-username/weather-crow5.7.git
+   cd weather-crow5.7
+   ```
 
-4. Configure the settings
-    - Copy `config.example.h` to `config.h` and update the defined values.
+3. **Configure settings**
+   - Copy `src/config.example.h` to `src/config.h`
+   - Update the values in `config.h` with your WiFi credentials and OpenWeatherMap API key
 
-5. Configure the build settings
-    - Go to Tools > Board and select `ESP32 S3 Dev Module`
-    - Go to Tools > Partition Scheme and select `Huge APP (3MB No OTA/1MB SPIFFS)`
-    - Go to Tools > PSRAM and select `OPI PSRAM`
-    - Go to Tools > Port and select the port where the CrowPanel ESP32 E-Paper HMI 5.79-inch Display is connected
+4. **Build the project**
+   ```bash
+   pio run
+   ```
 
-5. Upload the code
-    - Set the `baud rate to 115200` in the serial monitor.
-    - Connect the CrowPanel ESP32 E-Paper HMI 5.79-inch Display to your computer
-    - Click the Upload button
+5. **Upload to device**
+   - Connect the CrowPanel ESP32 E-Paper HMI 5.79-inch Display to your computer
+   ```bash
+   pio run --target upload
+   ```
+
+6. **Monitor serial output** (optional)
+   ```bash
+   pio device monitor
+   ```
+
+## Useful Commands
+
+| Command | Description |
+|---------|-------------|
+| `pio run` | Build the project |
+| `pio run --target upload` | Build and upload to device |
+| `pio run --target clean` | Clean build artifacts |
+| `pio device monitor` | Open serial monitor (115200 baud) |
 
 
 # Credits
