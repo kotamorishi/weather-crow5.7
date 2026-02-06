@@ -277,6 +277,8 @@ void ConfigManager::loadConfig() {
   config.lowPowerMode =
       preferences.getBool("low_power", DEFAULT_LOW_POWER_MODE);
   config.hourInterval = preferences.getInt("hour_int", DEFAULT_HOUR_INTERVAL);
+  config.units = preferences.getString("units", "metric");
+  config.enableAlertDisplay = preferences.getBool("alerts", true);
 
   preferences.end();
 
@@ -293,6 +295,8 @@ void ConfigManager::saveConfig() {
   preferences.putInt("refresh", config.refreshMinutes);
   preferences.putBool("low_power", config.lowPowerMode);
   preferences.putInt("hour_int", config.hourInterval);
+  preferences.putString("units", config.units);
+  preferences.putBool("alerts", config.enableAlertDisplay);
 
   preferences.end();
 
@@ -317,6 +321,8 @@ void ConfigManager::resetConfig() {
   config.refreshMinutes = DEFAULT_REFRESH_MINUTES;
   config.lowPowerMode = DEFAULT_LOW_POWER_MODE;
   config.hourInterval = DEFAULT_HOUR_INTERVAL;
+  config.units = "metric";
+  config.enableAlertDisplay = true;
 
   Serial.println("[ConfigManager] Configuration reset to defaults");
 }

@@ -1,6 +1,5 @@
 #include "ConfigManager.h"
 #include "EPD.h"
-#include "config.h"
 #include "weatherIcons.h"
 #include <Arduino.h>
 #include <ArduinoJson.h>
@@ -49,6 +48,8 @@ private:
   int refreshMinutes;
   int hourInterval;
   bool lowPowerMode;
+  String units;
+  bool enableAlertDisplay;
 
   // Data buffers
   String jsonBuffer;
@@ -112,6 +113,8 @@ private:
     refreshMinutes = configManager.getRefreshMinutes();
     hourInterval = configManager.getHourInterval();
     lowPowerMode = configManager.getLowPowerMode();
+    units = configManager.getUnits();
+    enableAlertDisplay = configManager.getEnableAlertDisplay();
 
     logPrintln("Configuration loaded:");
     logPrint("  Location: ");
@@ -179,9 +182,9 @@ private:
     uint16_t yOffset = 8;
     char buffer[STRING_BUFFER_SIZE];
 
-    // Display WiFi SSID
+    // Display WiFi SSID (show current connected network)
     memset(buffer, 0, sizeof(buffer));
-    snprintf(buffer, sizeof(buffer), "WIFI SSID: %s", String(WIFI_SSID));
+    snprintf(buffer, sizeof(buffer), "WIFI: %s", WiFi.SSID().c_str());
     EPD_ShowString(x, y, buffer, FONT_SIZE_8, BLACK, false);
     y += yOffset;
 
@@ -201,7 +204,7 @@ private:
     // Display location coordinates
     memset(buffer, 0, sizeof(buffer));
     snprintf(buffer, sizeof(buffer), "LOCATION LATITUDE: %s, LONGITUDE: %s",
-             String(LATITUDE), String(LONGITUDE));
+             apiParamLatitude.c_str(), apiParamLongitude.c_str());
     EPD_ShowString(x, y, buffer, FONT_SIZE_8, BLACK, false);
     y += yOffset;
 
@@ -339,7 +342,7 @@ private:
     return "https://api.openweathermap.org/data/3.0/onecall?lat=" +
            apiParamLatitude + "&lon=" + apiParamLongitude +
            "&exclude=minutely" + "&APPID=" + openWeatherMapApiKey +
-           "&units=" + UNITS;
+           "&units=" + units;
   }
 
   void setRTC(long unixTime) {
@@ -901,7 +904,7 @@ private:
                weatherInfo.tempIntegerPart.c_str());
       EPD_ShowStringRightAligned(x, y, buffer, FONT_SIZE_92, BLACK);
       memset(buffer, 0, sizeof(buffer));
-      if (UNITS == "metric") {
+      if (units == "metric") {
         snprintf(buffer, sizeof(buffer), "C");
         EPD_drawImage(x, y, degrees_sm);
       } else {
@@ -909,7 +912,7 @@ private:
       }
       EPD_ShowString(x + 10, y + 24, buffer, FONT_SIZE_36, BLACK);
     } else {
-      if (UNITS == "metric") {
+      if (units == "metric") {
         snprintf(buffer, sizeof(buffer), "C");
         EPD_drawImage(x - 2, y - 20, degrees_sm);
       } else {
@@ -938,8 +941,7 @@ private:
     String iconName = "icon_" + weatherInfo.icon + "_lg";
     EPD_drawImage(10, 1, getIcon(iconName.c_str()));
 
-    if ((ENABLE_ALERT_DISPLAY == true) &&
-        !weatherApiResponse["alerts"].isNull() &&
+    if (enableAlertDisplay && !weatherApiResponse["alerts"].isNull() &&
         weatherApiResponse["alerts"].size() > 0) {
       displayAlerts(270, 0);
       displayTemperature(740, 70, false);

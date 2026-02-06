@@ -37,6 +37,13 @@ struct AppConfig {
   int refreshMinutes;
   bool lowPowerMode;
   int hourInterval;
+  String units; // "metric" or "imperial"
+  bool enableAlertDisplay;
+
+  // Default constructor with sensible defaults
+  AppConfig()
+      : refreshMinutes(15), lowPowerMode(false), hourInterval(1),
+        units("metric"), enableAlertDisplay(true) {}
 
   // Check if config has been set (API key is required)
   bool isValid() const {
@@ -101,6 +108,8 @@ public:
   int getRefreshMinutes() const { return config.refreshMinutes; }
   bool getLowPowerMode() const { return config.lowPowerMode; }
   int getHourInterval() const { return config.hourInterval; }
+  String getUnits() const { return config.units; }
+  bool getEnableAlertDisplay() const { return config.enableAlertDisplay; }
 
   // Get the full config struct
   const AppConfig &getConfig() const { return config; }
