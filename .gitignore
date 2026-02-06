@@ -25,3 +25,8 @@ bin
 
 tools/exclude
 tools/previews/weather_icons_complete_preview.png
+
+# PlatformIO
+.pio/
+.pioenvs/
+.piolibdeps/
