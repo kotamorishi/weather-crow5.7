@@ -29,3 +29,6 @@ tools/previews/weather_icons_complete_preview.png
 .piolibdeps/
 
 src/config.h
+
+# Firmware binaries (built via GitHub Actions)
+docs/*.bin
