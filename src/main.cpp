@@ -1325,7 +1325,7 @@ void displayConfigPortalScreen(const char *apName, const char *ipAddress) {
 
   uint16_t baseXpos = 288;
 
-  EPD_ShowString(baseXpos, 28, "Welcome to Weather Crow", FONT_SIZE_16, BLACK);
+  EPD_ShowString(baseXpos, 28, "Weather Crow setup", FONT_SIZE_16, BLACK);
 
   EPD_ShowString(baseXpos, 60, "Please connect to WiFi", FONT_SIZE_16, BLACK);
 
