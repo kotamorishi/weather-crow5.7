@@ -11,9 +11,6 @@ Icon
 # Thumbnails
 ._*
 
-# Wifi names and passwords
-weatherCrow5.7/config.h
-
 # Python virtual environment
 venv/
 
@@ -30,3 +27,5 @@ tools/previews/weather_icons_complete_preview.png
 .pio/
 .pioenvs/
 .piolibdeps/
+
+src/config.h
