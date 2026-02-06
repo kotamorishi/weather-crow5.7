@@ -21,7 +21,7 @@ The weather data is fetched from the [OpenWeatherMap](https://openweathermap.org
 
 2. **Clone the repository**
    ```bash
-   git clone https://github.com/your-username/weather-crow5.7.git
+   git clone https://github.com/kotamorishi/weather-crow5.7.git
    cd weather-crow5.7
    ```
 
