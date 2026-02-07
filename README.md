@@ -7,12 +7,35 @@ This code based on the CrowPanel ESP32 E-Paper HMI 5.79-inch Display [example](h
 It is a weather station that displays the current weather and forecast for the next 5 to 25 hours depending on the configuration.
 The weather data is fetched from the [OpenWeatherMap](https://openweathermap.org/) API.
 
-# What you need
-- Hardware : [CrowPanel ESP32 E-Paper HMI 5.79-inch Display](https://www.elecrow.com/crowpanel-esp32-5-79-e-paper-hmi-display-with-272-792-resolution-black-white-color-driven-by-spi-interface.html)
-- API Key : [OpenWeatherMap API key](https://openweathermap.org/)
-- Software : [PlatformIO](https://platformio.org/) (CLI or VS Code extension)
+---
 
-# Setup
+## 🚀 Quick Start (Recommended for Beginners)
+
+**No coding required!** Flash the firmware directly from your browser:
+
+### [👉 Install Weather Crow via Web Installer](https://kotamorishi.github.io/weather-crow5.7/)
+
+**Requirements:**
+- Chrome, Edge, or Opera browser
+- USB cable connected to your ESP32-S3
+
+**After flashing:**
+1. Device creates WiFi hotspot: **WeatherCrow-Config**
+2. Connect to it on your phone/computer
+3. Go to **192.168.4.1**
+4. Enter your WiFi credentials and [OpenWeatherMap API key](https://openweathermap.org/api)
+
+---
+
+## What You Need
+- Hardware: [CrowPanel ESP32 E-Paper HMI 5.79-inch Display](https://www.elecrow.com/crowpanel-esp32-5-79-e-paper-hmi-display-with-272-792-resolution-black-white-color-driven-by-spi-interface.html)
+- API Key: [OpenWeatherMap API key](https://openweathermap.org/) (free tier works!)
+
+---
+
+## Developer Setup (Build from Source)
+
+If you want to modify the code or build from source:
 
 1. **Install PlatformIO**
    - Install via [VS Code extension](https://platformio.org/install/ide?install=vscode) (recommended), or
@@ -25,22 +48,17 @@ The weather data is fetched from the [OpenWeatherMap](https://openweathermap.org
    cd weather-crow5.7
    ```
 
-3. **Configure settings**
-   - Copy `src/config.example.h` to `src/config.h`
-   - Update the values in `config.h` with your WiFi credentials and OpenWeatherMap API key
-
-4. **Build the project**
+3. **Build the project**
    ```bash
    pio run
    ```
 
-5. **Upload to device**
-   - Connect the CrowPanel ESP32 E-Paper HMI 5.79-inch Display to your computer
+4. **Upload to device**
    ```bash
    pio run --target upload
    ```
 
-6. **Monitor serial output** (optional)
+5. **Monitor serial output** (optional)
    ```bash
    pio device monitor
    ```
@@ -54,6 +72,7 @@ The weather data is fetched from the [OpenWeatherMap](https://openweathermap.org
 | `pio run --target clean` | Clean build artifacts |
 | `pio device monitor` | Open serial monitor (115200 baud) |
 
+---
 
 # Credits
 - Weather data:
@@ -63,7 +82,6 @@ The weather data is fetched from the [OpenWeatherMap](https://openweathermap.org
   - [Weather Icons](https://erikflowers.github.io/weather-icons/)
   Weather Icons licensed under SIL OFL 1.1
   The Weather Icons project created and maintained by Erik Flowers. v1.0 artwork by Lukas Bischoff. v1.1 - 2.0 artwork by Erik Flowers
-
 
 - 8px font:
 Copyright (c) YUJI OSHIMOTO.
