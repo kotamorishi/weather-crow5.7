@@ -7,14 +7,16 @@
   <script type="module" src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module"></script>
   <style>
     :root {
-      --primary: #2563eb;
-      --primary-dark: #1d4ed8;
-      --bg: #0f172a;
-      --card: #1e293b;
-      --text: #f1f5f9;
-      --text-muted: #94a3b8;
-      --success: #22c55e;
-      --border: #334155;
+      --primary: #A1C45A;
+      --primary-dark: #8ab34a;
+      --accent: #F1C550;
+      --danger: #EA4C4C;
+      --bg: #FFF9E0;
+      --card: #ffffff;
+      --text: #2d3748;
+      --text-muted: #5a6a78;
+      --success: #A1C45A;
+      --border: rgba(161, 196, 90, 0.3);
     }
 
     * {
@@ -50,21 +52,18 @@
       height: auto;
       border-radius: 20px;
       margin-bottom: 1rem;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.12);
     }
 
     h1 {
-      font-size: 2rem;
+      font-size: 2.2rem;
       margin-bottom: 0.5rem;
-      background: linear-gradient(135deg, #60a5fa, #a78bfa);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
+      color: var(--text);
     }
 
     .version {
       color: var(--text-muted);
-      font-size: 0.9rem;
+      font-size: 0.95rem;
     }
 
     .card {
@@ -73,6 +72,7 @@
       padding: 2rem;
       margin-bottom: 1.5rem;
       border: 1px solid var(--border);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.06);
     }
 
     .install-section {
@@ -80,29 +80,31 @@
     }
 
     .install-section h2 {
-      font-size: 1.25rem;
-      margin-bottom: 1rem;
+      font-size: 1.3rem;
+      margin-bottom: 1.25rem;
+      color: var(--text);
     }
 
     esp-web-install-button {
-      --esp-tools-button-color: var(--primary);
-      --esp-tools-button-text-color: white;
+      display: block;
     }
 
-    esp-web-install-button::part(button) {
-      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    .install-btn {
+      background: linear-gradient(135deg, #4a7c23, #3a6318);
       border: none;
-      padding: 1rem 2rem;
-      font-size: 1.1rem;
-      font-weight: 600;
-      border-radius: 12px;
+      padding: 1.25rem 3rem;
+      font-size: 1.25rem;
+      font-weight: 700;
+      border-radius: 14px;
       cursor: pointer;
+      color: white;
       transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 4px 16px rgba(74, 124, 35, 0.4);
     }
 
-    esp-web-install-button::part(button):hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 20px rgba(37, 99, 235, 0.4);
+    .install-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 28px rgba(74, 124, 35, 0.5);
     }
 
     .requirements {
@@ -112,7 +114,7 @@
     }
 
     .requirements h3 {
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       color: var(--text-muted);
       margin-bottom: 0.75rem;
       text-transform: uppercase;
@@ -126,12 +128,13 @@
     }
 
     .requirements li {
-      padding: 0.25rem 0;
+      padding: 0.3rem 0;
     }
 
     .requirements li::before {
       content: "✓ ";
       color: var(--success);
+      font-weight: bold;
     }
 
     .instructions {
@@ -139,8 +142,9 @@
     }
 
     .instructions h2 {
-      font-size: 1.1rem;
+      font-size: 1.15rem;
       margin-bottom: 1rem;
+      color: var(--text);
     }
 
     .instructions ol {
@@ -150,7 +154,7 @@
 
     .instructions li {
       padding: 0.5rem 0;
-      line-height: 1.5;
+      line-height: 1.6;
     }
 
     .instructions strong {
@@ -165,8 +169,9 @@
     }
 
     footer a {
-      color: var(--primary);
+      color: var(--primary-dark);
       text-decoration: none;
+      font-weight: 500;
     }
 
     footer a:hover {
@@ -174,13 +179,17 @@
     }
 
     .warning {
-      background: rgba(234, 179, 8, 0.1);
-      border: 1px solid rgba(234, 179, 8, 0.3);
-      border-radius: 8px;
-      padding: 1rem;
-      margin-top: 1rem;
-      font-size: 0.85rem;
-      color: #fbbf24;
+      background: rgba(241, 197, 80, 0.2);
+      border: 1px solid rgba(241, 197, 80, 0.5);
+      border-radius: 10px;
+      padding: 1rem 1.25rem;
+      margin-top: 1.25rem;
+      font-size: 0.9rem;
+      color: #8b6914;
+    }
+
+    .warning strong {
+      color: #7a5c10;
     }
   </style>
 </head>
@@ -189,13 +198,13 @@
     <header>
       <img src="weatherCrow.jpg" alt="Weather Crow" class="logo" onerror="this.style.display='none'">
       <h1>Weather Crow</h1>
-      <p class="version">ESP32-S3 E-Paper Weather Display v5.7</p>
+      <p class="version"><a href="https://www.elecrow.com/sharepj/e-paper-weather-station-weather-crow-612.html" target="_blank" style="color: inherit; text-decoration: none;">ESP32-S3 E-Paper Weather Display 5.79-inch</a></p>
     </header>
 
     <div class="card install-section">
       <h2>Install Firmware</h2>
       <esp-web-install-button manifest="manifest.json">
-        <button slot="activate">Install Weather Crow</button>
+        <button slot="activate" class="install-btn">Install Weather Crow</button>
         <span slot="unsupported">
           Your browser doesn't support Web Serial.<br>
           Please use Chrome, Edge, or Opera on desktop.
@@ -208,6 +217,7 @@
           <li>Chrome, Edge, or Opera browser</li>
           <li>USB cable connected to your ESP32-S3</li>
           <li>Windows, macOS, or Linux</li>
+          <li><a href="https://openweathermap.org/api" target="_blank">OpenWeatherMap API key</a> (free)</li>
         </ul>
       </div>
     </div>
@@ -224,7 +234,7 @@
 
       <div class="warning">
         ⚠️ <strong>First boot:</strong> The device will create a WiFi hotspot called <strong>WeatherCrow-Config</strong>.
-        Connect to it and go to <strong>192.168.4.1</strong> to configure WiFi and your OpenWeatherMap API key.
+        Connect to it and go to <strong>192.168.4.1</strong> to configure WiFi and your <a href="https://openweathermap.org/api" target="_blank"></a>OpenWeatherMap API key</a> (free).
       </div>
     </div>
 
