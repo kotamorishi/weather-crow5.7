@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Weather Crow - ESP32-S3 Firmware Installer</title>
+  <script type="module" src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module"></script>
+  <style>
+    :root {
+      --primary: #A1C45A;
+      --primary-dark: #8ab34a;
+      --accent: #F1C550;
+      --danger: #EA4C4C;
+      --bg: #FFF9E0;
+      --card: #ffffff;
+      --text: #2d3748;
+      --text-muted: #5a6a78;
+      --success: #A1C45A;
+      --border: rgba(161, 196, 90, 0.3);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem;
+    }
+
+    .container {
+      max-width: 600px;
+      width: 100%;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .logo {
+      max-width: 800px;
+      width: 100%;
+      height: auto;
+      border-radius: 20px;
+      margin-bottom: 1rem;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+    }
+
+    h1 {
+      font-size: 2.2rem;
+      margin-bottom: 0.5rem;
+      color: var(--text);
+    }
+
+    .version {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: 16px;
+      padding: 2rem;
+      margin-bottom: 1.5rem;
+      border: 1px solid var(--border);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+    }
+
+    .install-section {
+      text-align: center;
+    }
+
+    .install-section h2 {
+      font-size: 1.3rem;
+      margin-bottom: 1.25rem;
+      color: var(--text);
+    }
+
+    esp-web-install-button {
+      display: block;
+    }
+
+    .install-btn {
+      background: linear-gradient(135deg, #4a7c23, #3a6318);
+      border: none;
+      padding: 1.25rem 3rem;
+      font-size: 1.25rem;
+      font-weight: 700;
+      border-radius: 14px;
+      cursor: pointer;
+      color: white;
+      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 4px 16px rgba(74, 124, 35, 0.4);
+    }
+
+    .install-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 28px rgba(74, 124, 35, 0.5);
+    }
+
+    .requirements {
+      margin-top: 1.5rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .requirements h3 {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .requirements ul {
+      list-style: none;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    .requirements li {
+      padding: 0.3rem 0;
+    }
+
+    .requirements li::before {
+      content: "✓ ";
+      color: var(--success);
+      font-weight: bold;
+    }
+
+    .instructions {
+      font-size: 0.95rem;
+    }
+
+    .instructions h2 {
+      font-size: 1.15rem;
+      margin-bottom: 1rem;
+      color: var(--text);
+    }
+
+    .instructions ol {
+      padding-left: 1.25rem;
+      color: var(--text-muted);
+    }
+
+    .instructions li {
+      padding: 0.5rem 0;
+      line-height: 1.6;
+    }
+
+    .instructions strong {
+      color: var(--text);
+    }
+
+    footer {
+      margin-top: 2rem;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+
+    footer a {
+      color: var(--primary-dark);
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    footer a:hover {
+      text-decoration: underline;
+    }
+
+    .warning {
+      background: rgba(241, 197, 80, 0.2);
+      border: 1px solid rgba(241, 197, 80, 0.5);
+      border-radius: 10px;
+      padding: 1rem 1.25rem;
+      margin-top: 1.25rem;
+      font-size: 0.9rem;
+      color: #8b6914;
+    }
+
+    .warning strong {
+      color: #7a5c10;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <img src="weatherCrow.jpg" alt="Weather Crow" class="logo" onerror="this.style.display='none'">
+      <h1>Weather Crow</h1>
+      <p class="version"><a href="https://www.elecrow.com/sharepj/e-paper-weather-station-weather-crow-612.html" target="_blank" style="color: inherit; text-decoration: none;">ESP32-S3 E-Paper Weather Display 5.79-inch</a></p>
+    </header>
+
+    <div class="card install-section">
+      <h2>Install Firmware</h2>
+      <esp-web-install-button manifest="manifest.json">
+        <button slot="activate" class="install-btn">Install Weather Crow</button>
+        <span slot="unsupported">
+          Your browser doesn't support Web Serial.<br>
+          Please use Chrome, Edge, or Opera on desktop.
+        </span>
+      </esp-web-install-button>
+
+      <div class="requirements">
+        <h3>Requirements</h3>
+        <ul>
+          <li>Chrome, Edge, or Opera browser</li>
+          <li>USB cable connected to your ESP32-S3</li>
+          <li>Windows, macOS, or Linux</li>
+          <li><a href="https://openweathermap.org/api" target="_blank">OpenWeatherMap API key</a> (free)</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card instructions">
+      <h2>How to Install</h2>
+      <ol>
+        <li>Connect your <strong>ESP32-S3</strong> device via USB</li>
+        <li>Click the <strong>Install Weather Crow</strong> button above</li>
+        <li>Select the serial port for your device(e.g. USB Serial)</li>
+        <li>Wait for the installation to complete (about 2 minutes)</li>
+        <li>Your device will restart and start the WiFi setup</li>
+      </ol>
+
+    </div>
+
+  <div class="card instructions">
+      <h2>How to Setup</h2>
+      <ol>
+        <li>When the first boot, the device will create a WiFi hotspot called <strong>WeatherCrow-Config</strong>. while hotspot is active, red-led light will be on.</li>
+        <li>Connect to it and go to <strong>192.168.4.1</strong> to configure WiFi and your <a href="https://openweathermap.org/api" target="_blank"></a>OpenWeatherMap API key</a> (free).</li>
+        <li>You will need to your latitude and longitude to get the weather data. check it <a href="https://www.latlong.net/" target="_blank">here</a>.</li>
+        <li>After save settings, the device will restart and connect to your WiFi.</li>
+      </ol>
+
+      <div class="warning">
+        ⚠️ <strong>Change settings:</strong> If you want to update the settings, press and hold the <strong>Menu Button</strong> on the device and push the <strong>Reset Button</strong>. you can release the menu button when the device screen shows setup instructions.
+      </div>
+    </div>
+
+    <footer>
+      <p>
+        <a href="https://github.com/kotamorishi/weather-crow5.7" target="_blank">View on GitHub</a>
+      </p>
+    </footer>
+  </div>
+</body>
+</html>
