@@ -106,6 +106,16 @@ bool ConfigManager::startConfigPortal(const char *reason) {
   // Custom portal title
   wm.setTitle("Weather Crow Configuration");
 
+  // Custom message after save - modify the "Saved" text
+  wm.setCustomHeadElement("<script>"
+                          "window.onload=function(){"
+                          "var m=document.querySelector('.msg');"
+                          "if(m && m.textContent=='Saved'){"
+                          "m.innerHTML='Saved! Device is restarting...';"
+                          "}"
+                          "};"
+                          "</script>");
+
   // Start the config portal (blocking)
   Serial.println("[ConfigManager] Starting config portal...");
   Serial.println("[ConfigManager] Connect to WiFi: 'WeatherCrow-Config'");
