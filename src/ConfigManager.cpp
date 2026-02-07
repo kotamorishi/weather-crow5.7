@@ -74,8 +74,7 @@ bool ConfigManager::begin(int buttonPin) {
 
     // Include the SSID that was attempted in the reason
     String ssid = WiFi.SSID();
-    String reason = "Opps! WiFi connection failed. If your router is not "
-                    "accessible, please reboot it.";
+    String reason = "Opps! WiFi connection failed. Restarting router may help.";
     if (ssid.length() > 0) {
       reason = "WiFi connection failed: " + ssid;
     }

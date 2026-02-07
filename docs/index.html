@@ -227,22 +227,30 @@
       <ol>
         <li>Connect your <strong>ESP32-S3</strong> device via USB</li>
         <li>Click the <strong>Install Weather Crow</strong> button above</li>
-        <li>Select the serial port for your device</li>
-        <li>Wait for the installation to complete (~30 seconds)</li>
+        <li>Select the serial port for your device(e.g. USB Serial)</li>
+        <li>Wait for the installation to complete (about 2 minutes)</li>
         <li>Your device will restart and start the WiFi setup</li>
       </ol>
 
+    </div>
+
+  <div class="card instructions">
+      <h2>How to Setup</h2>
+      <ol>
+        <li>When the first boot, the device will create a WiFi hotspot called <strong>WeatherCrow-Config</strong>. while hotspot is active, red-led light will be on.</li>
+        <li>Connect to it and go to <strong>192.168.4.1</strong> to configure WiFi and your <a href="https://openweathermap.org/api" target="_blank"></a>OpenWeatherMap API key</a> (free).</li>
+        <li>You will need to your latitude and longitude to get the weather data. check it <a href="https://www.latlong.net/" target="_blank">here</a>.</li>
+        <li>After save settings, the device will restart and connect to your WiFi.</li>
+      </ol>
+
       <div class="warning">
-        ⚠️ <strong>First boot:</strong> The device will create a WiFi hotspot called <strong>WeatherCrow-Config</strong>.
-        Connect to it and go to <strong>192.168.4.1</strong> to configure WiFi and your <a href="https://openweathermap.org/api" target="_blank"></a>OpenWeatherMap API key</a> (free).
+        ⚠️ <strong>Change settings:</strong> If you want to update the settings, press and hold the <strong>Menu Button</strong> on the device and push the <strong>Reset Button</strong>. you can release the menu button when the device screen shows setup instructions.
       </div>
     </div>
 
     <footer>
       <p>
         <a href="https://github.com/kotamorishi/weather-crow5.7" target="_blank">View on GitHub</a>
-        &nbsp;•&nbsp;
-        Made with ❤️ for e-paper enthusiasts
       </p>
     </footer>
   </div>
