@@ -8,7 +8,7 @@
       "chipFamily": "ESP32-S3",
       "parts": [
         {
-          "path": "https://github.com/kotamorishi/weather-crow5.7/releases/latest/download/firmware_merged.bin",
+          "path": "firmware_merged.bin",
           "offset": 0
         }
       ]
