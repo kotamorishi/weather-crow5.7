@@ -140,6 +140,8 @@ private:
   WiFiManagerParameter *paramRefreshMinutes;
   WiFiManagerParameter *paramLowPowerMode;
   WiFiManagerParameter *paramHourInterval;
+  WiFiManagerParameter *paramUnits;
+  WiFiManagerParameter *paramEnableAlerts;
 
   /**
    * Check if config button is being held during boot
@@ -154,12 +156,12 @@ private:
   /**
    * Callback when WiFiManager saves parameters
    */
-  void saveParamsCallback();
+  void saveParamsCallback(WiFiManager &wm);
 
   /**
    * Read parameters from WiFiManager after portal closes
    */
-  void readWiFiManagerParams();
+  void readWiFiManagerParams(WiFiManager &wm);
 };
 
 #endif // CONFIG_MANAGER_H

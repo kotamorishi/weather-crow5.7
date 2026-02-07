@@ -9,6 +9,7 @@
 // Static pointer for callback (WiFiManager doesn't support member function
 // callbacks)
 static ConfigManager *configManagerInstance = nullptr;
+static WiFiManager *currentWM = nullptr;
 
 ConfigManager::ConfigManager()
     : configButtonPin(-1), paramApiKey(nullptr), paramLatitude(nullptr),
@@ -70,10 +71,20 @@ bool ConfigManager::begin(int buttonPin) {
 
     // Start config portal when WiFi fails OR no configuration exists
     Serial.println("[ConfigManager] Starting config portal for setup...");
-    return startConfigPortal("WiFi Connection Failed");
+
+    // Include the SSID that was attempted in the reason
+    String ssid = WiFi.SSID();
+    String reason = "Opps! WiFi connection failed. If your router is not "
+                    "accessible, please reboot it.";
+    if (ssid.length() > 0) {
+      reason = "WiFi connection failed: " + ssid;
+    }
+    return startConfigPortal(reason.c_str());
   }
 
   Serial.println("[ConfigManager] WiFi connected!");
+  Serial.print("[ConfigManager] SSID: ");
+  Serial.println(WiFi.SSID());
   Serial.print("[ConfigManager] IP: ");
   Serial.println(WiFi.localIP());
 
@@ -82,6 +93,7 @@ bool ConfigManager::begin(int buttonPin) {
 
 bool ConfigManager::startConfigPortal(const char *reason) {
   WiFiManager wm;
+  currentWM = &wm; // Store pointer for callback access
 
   // Setup custom parameters
   setupWiFiManager(wm);
@@ -110,13 +122,15 @@ bool ConfigManager::startConfigPortal(const char *reason) {
     Serial.println("[ConfigManager] Portal completed - WiFi connected");
 
     // Read and save parameters
-    readWiFiManagerParams();
+    readWiFiManagerParams(wm);
     saveConfig();
 
     Serial.println("[ConfigManager] Configuration saved");
   } else {
     Serial.println("[ConfigManager] Portal timeout or cancelled");
   }
+
+  currentWM = nullptr;
 
   // Cleanup WiFiManager parameters
   delete paramApiKey;
@@ -126,6 +140,8 @@ bool ConfigManager::startConfigPortal(const char *reason) {
   delete paramRefreshMinutes;
   delete paramLowPowerMode;
   delete paramHourInterval;
+  delete paramUnits;
+  delete paramEnableAlerts;
 
   paramApiKey = nullptr;
   paramLatitude = nullptr;
@@ -134,6 +150,8 @@ bool ConfigManager::startConfigPortal(const char *reason) {
   paramRefreshMinutes = nullptr;
   paramLowPowerMode = nullptr;
   paramHourInterval = nullptr;
+  paramUnits = nullptr;
+  paramEnableAlerts = nullptr;
 
   return result;
 }
@@ -173,16 +191,32 @@ void ConfigManager::setupWiFiManager(WiFiManager &wm) {
       new WiFiManagerParameter("hour_interval", "Forecast Hour Interval (1-6)",
                                hourStr, 2, "type='number' min='1' max='6'");
 
-  // Low Power Mode (checkbox)
-  // WiFiManager doesn't have native checkbox, so we use a custom HTML approach
-  const char *lowPowerChecked = config.lowPowerMode ? "checked" : "";
-  char lowPowerHtml[200];
-  snprintf(lowPowerHtml, sizeof(lowPowerHtml),
-           "<label for='low_power'>Low Power Mode</label>"
-           "<input type='checkbox' id='low_power' name='low_power' value='1' "
-           "%s style='width:auto'>",
-           lowPowerChecked);
-  paramLowPowerMode = new WiFiManagerParameter(lowPowerHtml);
+  // Low Power Mode (checkbox) - keep HTML minimal
+  paramLowPowerMode = new WiFiManagerParameter(
+      config.lowPowerMode
+          ? "<br><label><input type='checkbox' name='low_power' value='1' "
+            "checked> Low Power Mode</label>"
+          : "<br><label><input type='checkbox' name='low_power' value='1'> Low "
+            "Power Mode</label>");
+
+  // Units dropdown (metric/imperial) - keep HTML minimal
+  const char *unitsMetricSelected =
+      config.units == "metric"
+          ? "<br><label>Units</label><select name='units'><option "
+            "value='metric' selected>Celsius</option><option "
+            "value='imperial'>Fahrenheit</option></select>"
+          : "<br><label>Units</label><select name='units'><option "
+            "value='metric'>Celsius</option><option value='imperial' "
+            "selected>Fahrenheit</option></select>";
+  paramUnits = new WiFiManagerParameter(unitsMetricSelected);
+
+  // Enable Alert Display (checkbox) - keep HTML minimal
+  paramEnableAlerts = new WiFiManagerParameter(
+      config.enableAlertDisplay
+          ? "<br><label><input type='checkbox' name='alerts' value='1' "
+            "checked> Show Weather Alerts</label>"
+          : "<br><label><input type='checkbox' name='alerts' value='1'> Show "
+            "Weather Alerts</label>");
 
   // Add parameters to WiFiManager
   wm.addParameter(paramApiKey);
@@ -191,23 +225,25 @@ void ConfigManager::setupWiFiManager(WiFiManager &wm) {
   wm.addParameter(paramLocationName);
   wm.addParameter(paramRefreshMinutes);
   wm.addParameter(paramHourInterval);
+  wm.addParameter(paramUnits);
+  wm.addParameter(paramEnableAlerts);
   wm.addParameter(paramLowPowerMode);
 
-  // Set save callback
+  // Set save callback - use currentWM to access server args
   wm.setSaveParamsCallback([]() {
-    if (configManagerInstance) {
-      configManagerInstance->saveParamsCallback();
+    if (configManagerInstance && currentWM) {
+      configManagerInstance->saveParamsCallback(*currentWM);
     }
   });
 }
 
-void ConfigManager::saveParamsCallback() {
+void ConfigManager::saveParamsCallback(WiFiManager &wm) {
   Serial.println("[ConfigManager] Save params callback triggered");
-  readWiFiManagerParams();
+  readWiFiManagerParams(wm);
   saveConfig();
 }
 
-void ConfigManager::readWiFiManagerParams() {
+void ConfigManager::readWiFiManagerParams(WiFiManager &wm) {
   if (paramApiKey) {
     config.apiKey = String(paramApiKey->getValue());
     config.apiKey.trim();
@@ -242,11 +278,22 @@ void ConfigManager::readWiFiManagerParams() {
       config.hourInterval = DEFAULT_HOUR_INTERVAL;
   }
 
-  // For checkbox, we need to check if it was submitted
-  // WiFiManager custom HTML checkbox returns "1" if checked, empty if not
-  // This is handled by checking the HTTP POST data
-  // For now, we keep the existing value (checkbox state is tricky with
-  // WiFiManager) A more robust solution would use JavaScript or hidden fields
+  // Read custom HTML parameters via server args
+  if (wm.server) {
+    // Units dropdown
+    if (wm.server->hasArg("units")) {
+      String units = wm.server->arg("units");
+      if (units == "metric" || units == "imperial") {
+        config.units = units;
+      }
+    }
+
+    // Low Power Mode checkbox
+    config.lowPowerMode = wm.server->hasArg("low_power");
+
+    // Enable Alerts checkbox
+    config.enableAlertDisplay = wm.server->hasArg("alerts");
+  }
 
   Serial.println("[ConfigManager] Parameters read from portal:");
   Serial.print("  API Key: ");
@@ -283,6 +330,20 @@ void ConfigManager::loadConfig() {
   preferences.end();
 
   Serial.println("[ConfigManager] Loaded config from NVS");
+  Serial.print("  API Key: ");
+  Serial.println(config.apiKey.length() > 0 ? "(set)" : "(empty)");
+  Serial.print("  Latitude: ");
+  Serial.println(config.latitude);
+  Serial.print("  Longitude: ");
+  Serial.println(config.longitude);
+  Serial.print("  Location: ");
+  Serial.println(config.locationName);
+  Serial.print("  Refresh: ");
+  Serial.println(config.refreshMinutes);
+  Serial.print("  Hour Interval: ");
+  Serial.println(config.hourInterval);
+  Serial.print("  Low Power: ");
+  Serial.println(config.lowPowerMode ? "true" : "false");
 }
 
 void ConfigManager::saveConfig() {

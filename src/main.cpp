@@ -1356,6 +1356,17 @@ void displayConfigPortalScreen(const char *apName, const char *ipAddress,
   EPD_Display(configImageBW);
   EPD_PartUpdate();
 
+  // Blink LED to indicate AP mode is active
+  pinMode(PWR_LED_PIN, OUTPUT);
+  for (int i = 0; i < 5; i++) {
+    digitalWrite(PWR_LED_PIN, HIGH);
+    delay(200);
+    digitalWrite(PWR_LED_PIN, LOW);
+    delay(200);
+  }
+  // Leave LED on to indicate AP mode
+  digitalWrite(PWR_LED_PIN, HIGH);
+
   Serial.println("[Display] Config portal screen displayed");
 }
 
