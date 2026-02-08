@@ -558,6 +558,34 @@ private:
     // Limit to either requested length or available data
     int forecastsToShow = min(length, (uint16_t)availableHours);
 
+    // Pre-calculate max temperature width to adjust starting position
+    int maxTempWidth = 2; // Default for 2-digit temps like "25"
+    for (uint16_t i = 1, counter = 0; counter < forecastsToShow;
+         i += hourInterval, counter++) {
+      if (i >= availableHours)
+        break;
+      JsonObject hourly = weatherApiResponse["hourly"][i];
+      if (!hourly["temp"].isNull()) {
+        int tempInt = (int)hourly["temp"].as<float>();
+        int tempWidth = 1;
+        if (tempInt <= -10)
+          tempWidth = 3; // -24, -10
+        else if (tempInt < 0)
+          tempWidth = 2; // -9 to -1
+        else if (tempInt >= 100)
+          tempWidth = 3; // 100+
+        else if (tempInt >= 10)
+          tempWidth = 2; // 10-99
+        if (tempWidth > maxTempWidth)
+          maxTempWidth = tempWidth;
+      }
+    }
+
+    // Shift left if temperatures are 3+ characters wide
+    if (maxTempWidth >= 3) {
+      x -= 15 * (maxTempWidth - 2); // Shift 15px per extra character
+    }
+
     for (uint16_t i = 1, counter = 0; counter < forecastsToShow;
          i += hourInterval, counter++) {
       // Safely check if the hourly entry exists
